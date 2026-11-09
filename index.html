@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมแกะข้อมูลรายการผ่านทาง (By หน่องไอซ์) - Zero API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f1f5f9;
+            background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
+            background-size: 20px 20px;
+        }
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .paste-zone {
+            border: 2px dashed #6366f1;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .paste-zone:focus-within, .paste-zone:hover {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.15);
+        }
+        .field-card {
+            transition: all 0.15s ease;
+        }
+        .field-card:focus-within {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.12);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-16">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 border-b border-emerald-500/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3.5">
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-2.5 rounded-xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-xl text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-emerald-100 to-emerald-300 bg-clip-text text-transparent">
+                            โปรแกรมแกะข้อมูลรายการผ่านทาง (By หน่องไอซ์)
+                        </h1>
+                        <span class="hidden sm:inline-block text-[11px] font-bold uppercase px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-md">
+                            Zero-API 100% (ไม่ใช้เน็ต/ไม่ติดลิมิต)
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        ลากคลุมดำข้อความจากระบบ ➔ กดวาง (<kbd class="px-1.5 py-0.5 bg-slate-800 text-emerald-300 rounded border border-slate-700 font-mono-code text-[11px]">Ctrl+V</kbd>) แยก 10 ช่องทันทีใน 0.01 วินาที
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Auto Copy Toggle -->
+                <label class="flex items-center gap-2 bg-slate-800/90 hover:bg-slate-800 border border-slate-700 px-3 py-2 rounded-xl cursor-pointer text-xs font-medium text-slate-200 transition select-none" title="คัดลอกข้อมูลทั้ง 10 ช่องลงคลิปบอร์ดอัตโนมัติทันทีที่วางข้อความ">
+                    <input type="checkbox" id="autoCopyToggle" checked class="rounded text-emerald-500 focus:ring-0 w-4 h-4 accent-emerald-500 cursor-pointer">
+                    <span>คัดลอก 10 ช่องอัตโนมัติทันทีที่วาง</span>
+                </label>
+
+                <button onclick="loadSampleText(false)" class="bg-slate-800 hover:bg-slate-700 text-indigo-200 border border-slate-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> ทดสอบข้อความตัวอย่าง (กธ 3407)
+                </button>
+
+                <button onclick="clearWorkspace()" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> ล้างข้อมูล
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+        <!-- Section 1: Instant Text Paste Zone & 10-Field Editor -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Raw Text Paste Box -->
+            <div class="lg:col-span-4 flex flex-col">
+                <div class="paste-zone bg-white rounded-2xl p-4 flex-1 flex flex-col justify-between shadow-sm relative">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-paste"></i>
+                                </span>
+                                <div>
+                                    <h3 class="text-sm font-extrabold text-slate-800">กล่องรับข้อความต้นฉบับ (Ctrl+V ที่ไหนก็ได้)</h3>
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearRawTextOnly()" class="text-xs text-slate-400 hover:text-rose-600 font-semibold px-2 py-1 rounded hover:bg-rose-50 transition cursor-pointer">
+                                ล้างกล่องข้อความ
+                            </button>
+                        </div>
+
+                        <p class="text-xs text-slate-500 mb-2.5">
+                            ลากคลุมดำตั้งแต่ <b class="text-indigo-600">หมวดอักษร</b> ถึง <b class="text-indigo-600">วินาทีเริ่มต้น</b> แล้วกด <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono-code text-[11px] font-bold text-indigo-700">Ctrl+V</kbd> บนหน้าเว็บนี้ได้เลย:
+                        </p>
+
+                        <textarea
+                            id="rawTextInput"
+                            rows="9"
+                            oninput="handleRawTextChange(this.value)"
+                            placeholder="วางข้อความที่ก๊อปมาจากหน้าเว็บที่นี่...&#10;&#10;ตัวอย่าง:&#10;หมวดอักษร&#10;กธ&#10;เลขทะเบียน&#10;3407&#10;จังหวัด&#10;กำแพงเพชร&#10;..."
+                            class="w-full p-3 bg-slate-50/90 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs font-mono-code text-slate-700 leading-relaxed resize-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- Extracted Tags Summary & Plaza Reference -->
+                    <div class="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+                        <div id="parsedExtraBadges" class="flex flex-wrap gap-1.5">
+                            <span class="text-[11px] text-slate-400">ข้อมูลเสริม: รอรับข้อความ...</span>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/70">
+                            <span class="text-[11px] font-bold text-slate-500">แปลงรหัสด่านอัตโนมัติ:</span>
+                            <div class="flex gap-1.5">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ทับช้าง 1/2 ➔ TC1/TC2
+                                </span>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                    ธัญบุรี 1/2 ➔ TY1/TY2
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Mode Switcher & 10 Inputs -->
+            <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5 flex flex-col justify-between">
+                <div>
+                    <!-- Top Editor Status Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                            <h2 class="font-extrabold text-slate-800 text-base">
+                                ข้อมูลที่จำแนกได้ (เรียงช่อง 1 - 10 จากซ้ายไปขวา)
+                            </h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="statusBadge" class="text-xs px-3 py-1 bg-slate-100 text-slate-600 rounded-full font-bold flex items-center gap-1.5">
+                                <i class="fa-regular fa-clock"></i> รอวางข้อความ (Ctrl+V)...
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 3 Mode Selection Bar -->
+                    <div class="mb-4 bg-slate-50/90 p-3.5 rounded-xl border border-slate-200/80">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                            <span class="text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-sliders text-indigo-600"></i> เลือกโหมดการทำงาน (3 MODE):
+                            </span>
+                            <span id="currentModeLabel" class="text-xs font-bold text-indigo-700 bg-indigo-100/90 border border-indigo-200 px-3 py-0.5 rounded-full">
+                                โหมด 1: สร้างรถจี้ท้ายจาก CCTV
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <button type="button" id="modeBtn_1" onclick="selectMode(1)" class="px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer">
+                                <i class="fa-solid fa-video"></i>
+                                <span>1. สร้างรถจี้ท้ายจาก CCTV</span>
+                            </button>
+                            <button type="button" id="modeBtn_2" onclick="selectMode(2)" class="px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer">
+                                <i class="fa-solid fa-truck-pickup"></i>
+                                <span>2. ปรับราคารถลากจูง</span>
+                            </button>
+                            <button type="button" id="modeBtn_3" onclick="selectMode(3)" class="px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer">
+                                <i class="fa-solid fa-car-on"></i>
+                                <span>3. สร้างรถหายแบบสร้างเท่านั้น</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 10 Fields Grid (2 Rows x 5 Columns on Desktop) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                        
+                        <!-- 1. หมวดทะเบียน (+จังหวัด) -->
+                        <div class="field-card bg-indigo-50/40 p-2.5 rounded-xl border border-indigo-200/80">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_1" class="text-xs font-extrabold text-indigo-950">1. หมวดทะเบียน (+จังหวัด)</label>
+                                <button onclick="copyField(1)" title="คัดลอกช่องที่ 1" class="text-xs text-indigo-600 hover:text-indigo-800 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_1" oninput="syncFromInputs()" placeholder="กธ 3407 กำแพงเพชร" class="w-full px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold text-slate-900 text-sm">
+                        </div>
+
+                        <!-- 2. ตรวจสอบรายการผ่านทาง -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_2" class="text-xs font-bold text-slate-600">2. ตรวจสอบรายการฯ</label>
+                                <button onclick="copyField(2)" title="คัดลอกช่องที่ 2" class="text-xs text-slate-500 hover:text-indigo-600 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_2" oninput="syncFromInputs()" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-700 text-sm">
+                        </div>
+
+                        <!-- 3. ด่าน (ตัวย่อ) -->
+                        <div class="field-card bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-200/80">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_3" class="text-xs font-extrabold text-emerald-900">3. ด่าน (ตัวย่อ)</label>
+                                <button onclick="copyField(3)" title="คัดลอกช่องที่ 3" class="text-xs text-emerald-600 hover:text-emerald-800 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_3" oninput="syncFromInputs()" placeholder="TC1 / TC2 / TY1 / TY2" class="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-extrabold text-emerald-800 text-sm">
+                            <div class="flex gap-1 mt-1.5">
+                                <button type="button" onclick="quickSetPlaza('TC1')" class="flex-1 text-[10px] font-bold py-0.5 rounded bg-emerald-100/80 hover:bg-emerald-200 text-emerald-800 transition cursor-pointer">TC1</button>
+                                <button type="button" onclick="quickSetPlaza('TC2')" class="flex-1 text-[10px] font-bold py-0.5 rounded bg-emerald-100/80 hover:bg-emerald-200 text-emerald-800 transition cursor-pointer">TC2</button>
+                                <button type="button" onclick="quickSetPlaza('TY1')" class="flex-1 text-[10px] font-bold py-0.5 rounded bg-blue-100/80 hover:bg-blue-200 text-blue-800 transition cursor-pointer">TY1</button>
+                                <button type="button" onclick="quickSetPlaza('TY2')" class="flex-1 text-[10px] font-bold py-0.5 rounded bg-blue-100/80 hover:bg-blue-200 text-blue-800 transition cursor-pointer">TY2</button>
+                            </div>
+                        </div>
+
+                        <!-- 4. วัน เวลา -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_4" class="text-xs font-extrabold text-slate-700">4. วัน เวลา</label>
+                                <button onclick="copyField(4)" title="คัดลอกช่องที่ 4" class="text-xs text-indigo-600 hover:text-indigo-800 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_4" oninput="handleDateTimeInput(this.value)" placeholder="03/11/2026 00:00:08" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold text-slate-800 text-sm">
+                        </div>
+
+                        <!-- 5. เดือน (ภาษาไทย) -->
+                        <div class="field-card bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/80">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_5" class="text-xs font-extrabold text-amber-900">5. เดือน (ภาษาไทย)</label>
+                                <button onclick="copyField(5)" title="คัดลอกช่องที่ 5" class="text-xs text-amber-700 hover:text-amber-900 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_5" oninput="syncFromInputs()" placeholder="พฤศจิกายน" class="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none font-bold text-amber-900 text-sm">
+                        </div>
+
+                        <!-- 6. รหัส/ค่าคงที่ -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_6" class="text-xs font-bold text-slate-600">6. รหัส/ค่าคงที่</label>
+                                <button onclick="copyField(6)" title="คัดลอกช่องที่ 6" class="text-xs text-slate-500 hover:text-indigo-600 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_6" oninput="syncFromInputs()" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono-code text-slate-700 text-sm">
+                        </div>
+
+                        <!-- 7. ประเภทตรวจสอบ -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_7" class="text-xs font-bold text-slate-600">7. ประเภทตรวจสอบ</label>
+                                <button onclick="copyField(7)" title="คัดลอกช่องที่ 7" class="text-xs text-slate-500 hover:text-indigo-600 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_7" oninput="syncFromInputs()" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-700 text-sm">
+                        </div>
+
+                        <!-- 8. Ref Trip Id (31 ตัว / _1) -->
+                        <div class="field-card bg-indigo-50/40 p-2.5 rounded-xl border border-indigo-200/80">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_8" class="text-xs font-extrabold text-indigo-950">8. Ref Trip Id</label>
+                                <div class="flex items-center gap-1">
+                                    <span id="refLenBadge" class="text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">0/31</span>
+                                    <button onclick="copyField(8)" title="คัดลอกช่องที่ 8" class="text-xs text-indigo-600 hover:text-indigo-800 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <input type="text" id="col_8" maxlength="34" oninput="handleRefInput(this)" placeholder="583102026...A หรือ ...A_1" class="w-full px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono-code text-xs font-bold text-slate-900">
+                            <div class="flex items-center justify-between mt-1.5">
+                                <span class="text-[10px] text-slate-500">ล็อก 31 ตัวหลัก</span>
+                                <button type="button" onclick="toggleRefSuffixOne()" class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-800 transition cursor-pointer" title="เติมหรือลบ _1 ต่อท้ายรหัส 31 ตัวอักษร">
+                                    สลับต่อท้าย _1
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 9. การดำเนินการ -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_9" class="text-xs font-bold text-slate-600">9. การดำเนินการ</label>
+                                <button onclick="copyField(9)" title="คัดลอกช่องที่ 9" class="text-xs text-slate-500 hover:text-indigo-600 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_9" oninput="syncFromInputs()" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-700 text-sm">
+                        </div>
+
+                        <!-- 10. หมายเหตุระบบ -->
+                        <div class="field-card bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="col_10" class="text-xs font-bold text-slate-600">10. หมายเหตุระบบ</label>
+                                <button onclick="copyField(10)" title="คัดลอกช่องที่ 10" class="text-xs text-slate-500 hover:text-indigo-600 px-1 cursor-pointer"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                            <input type="text" id="col_10" oninput="syncFromInputs()" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-700 text-sm">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Info Metadata -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <div id="metaSummary" class="text-xs text-slate-500 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-emerald-500"></i>
+                        <span>พร้อมรับข้อความ (กด Ctrl+V ที่ไหนก็ได้บนหน้านี้เพื่อแยกข้อมูลทันที)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">
+                        คั่นแต่ละช่องด้วย Tab (<code class="font-mono-code">\t</code>) พร้อมวางใน Excel ทันที
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Prominent Single-Click Copy Button -->
+        <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 rounded-2xl p-1 shadow-lg">
+            <button onclick="copyEntireRow(false)" class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white rounded-xl font-extrabold text-lg sm:text-xl tracking-wide shadow-inner transition-all flex items-center justify-center gap-3 cursor-pointer">
+                <i class="fa-solid fa-copy text-2xl animate-bounce"></i>
+                <span>คัดลอกข้อมูลทั้ง 10 ช่อง (คลิกปุ่มเดียวไปวางใน Excel ได้เลย)</span>
+            </button>
+        </div>
+
+        <!-- Section 3: Live 10-Column Table Preview -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/80">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-indigo-600"></i>
+                        ตารางพรีวิว 10 คอลัมน์ (เรียงซ้ายไปขวาตรงตาม Excel)
+                    </h2>
+                    <span id="tableCountBadge" class="px-2.5 py-0.5 text-xs font-bold bg-slate-200 text-slate-700 rounded-full">
+                        ว่าง
+                    </span>
+                </div>
+                <button onclick="copyEntireRow(true)" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200 transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-table"></i> คัดลอกพร้อมหัวตาราง
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-xs uppercase tracking-wider">
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[210px]"><span class="text-indigo-300 mr-1">1.</span>หมวดทะเบียน</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[160px]"><span class="text-indigo-300 mr-1">2.</span>ตรวจสอบรายการผ่านทาง</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[85px]"><span class="text-indigo-300 mr-1">3.</span>ด่าน</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[155px]"><span class="text-indigo-300 mr-1">4.</span>วัน เวลา</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[130px] bg-amber-950/60"><span class="text-amber-300 mr-1">5.</span>เดือน</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[105px]"><span class="text-indigo-300 mr-1">6.</span>00 0000 -</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[200px]"><span class="text-indigo-300 mr-1">7.</span>ตรวจสอบการผ่านทางที่ผิดกฎหมาย</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[265px]"><span class="text-indigo-300 mr-1">8.</span>Ref Trip Id (31 ตัว / _1)</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[165px]"><span class="text-indigo-300 mr-1">9.</span>สร้างรถจี้ท้ายจาก CCTV</th>
+                            <th class="py-3 px-3 min-w-[140px]"><span class="text-indigo-300 mr-1">10.</span>ยิงpostmanเท่านั้น</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody" class="divide-y divide-slate-200 text-sm"></tbody>
+                </table>
+            </div>
+
+            <div id="tableEmptyState" class="p-10 text-center text-slate-400">
+                <i class="fa-solid fa-paste text-3xl mb-2 text-slate-300"></i>
+                <p class="text-sm font-medium text-slate-500">
+                    ก๊อปข้อความจากระบบแล้วกด <kbd class="px-1.5 py-0.5 bg-slate-100 border rounded text-indigo-600 font-mono-code text-xs">Ctrl + V</kbd> เพื่อแสดงข้อมูลในตารางพรีวิว
+                </p>
+            </div>
+        </div>
+
+        <!-- Section 4: Session History Log -->
+        <div id="historySection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/60">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+                    <h3 class="font-bold text-slate-700 text-sm">
+                        ประวัติรายการที่แกะในรอบนี้ (คลิกเพื่อเรียกดู หรือคัดลอกหลายรายการรวดเดียว)
+                    </h3>
+                    <span id="historyCountBadge" class="px-2 py-0.5 text-xs font-bold bg-slate-200 text-slate-700 rounded-full">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyAllHistoryRows()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-layer-group"></i> คัดลอกประวัติทั้งหมดไปวางรวดเดียว
+                    </button>
+                    <button onclick="openClearHistoryModal()" class="text-xs font-semibold text-slate-500 hover:text-rose-600 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 transition flex items-center gap-1 cursor-pointer">
+                        <i class="fa-regular fa-trash-can"></i> ล้างประวัติ
+                    </button>
+                </div>
+            </div>
+            <div id="historyList" class="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                <div class="p-6 text-center text-xs text-slate-400">
+                    ยังไม่มีประวัติการแกะข้อมูลในรอบนี้
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Confirm Clear History Modal -->
+    <div id="confirmClearHistoryModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 text-center">
+            <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3.5 shadow-xs">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="text-base font-extrabold text-slate-800">ยืนยันการล้างประวัติทั้งหมด?</h3>
+            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                คุณต้องการลบประวัติรายการที่แกะในรอบนี้ทั้งหมด (<span id="confirmHistoryCount" class="font-bold text-rose-600">0</span> รายการ) ใช่หรือไม่?
+            </p>
+            <div class="mt-5 flex items-center justify-center gap-2.5">
+                <button type="button" onclick="closeClearHistoryModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="confirmClearHistoryLog()" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-trash-can"></i> ยืนยันลบประวัติ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-slate-700">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastText" class="text-sm font-medium">ดำเนินการสำเร็จ</span>
+    </div>
+
+    <script>
+        // --- Core Constants ---
+        const MAX_REF_LENGTH = 31; // Strictly 30 digits + 1 trailing letter (e.g., A)
+
+        // --- Sample Text from User ---
+        const SAMPLE_RAW_TEXT = `หมวดอักษร
+กธ
+เลขทะเบียน
+3407
+จังหวัด
+กำแพงเพชร
+Class
+4 ล้อ
+สายทาง
+ทางหลวงพิเศษหมายเลข 9
+ด่าน
+ทับช้าง 2
+ช่องทาง
+1
+
+Ref Trip Id
+583102026110300000846170728611A
+วันที่ผ่านทาง
+03/11/2026
+ชั่วโมง-นาทีผ่านทาง
+00:00
+วินาทีเริ่มต้น
+08
+เหตุผลในการสร้างรายการผ่านทางใหม่
+อนุมัติจาก CCTV`;
+
+        // --- 3 Mode Presets ---
+        const MODE_PRESETS = {
+            1: {
+                name: 'โหมด 1: สร้างรถจี้ท้ายจาก CCTV',
+                col2: 'ตรวจสอบรายการผ่านทาง',
+                col6: '00 0000 -',
+                col7: 'ตรวจสอบการผ่านทางที่ผิดกฎหมาย',
+                overrideCol8: null,
+                col9: 'สร้างรถจี้ท้ายจาก CCTV',
+                col10: 'ยิงpostmanเท่านั้น'
+            },
+            2: {
+                name: 'โหมด 2: ปรับราคารถลากจูง',
+                col2: 'ตรวจสอบรายการผ่านทาง',
+                col6: '---',
+                col7: 'ตรวจสอบรายการผ่านทาง',
+                overrideCol8: null,
+                col9: 'ปรับราคา',
+                col10: 'สร้างTXNเท่านั้น'
+            },
+            3: {
+                name: 'โหมด 3: สร้างรถหายแบบสร้างเท่านั้น',
+                col2: 'ตรวจสอบรายการผ่านทาง',
+                col6: '---',
+                col7: '-',
+                overrideCol8: '---',
+                col9: 'สร้างจากกล้อง CCTV',
+                col10: 'สร้างTXNเท่านั้น'
+            }
+        };
+
+        // --- Thai Month Names Mapping ---
+        const THAI_MONTHS = [
+            'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
+            'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
+            'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        ];
+
+        function extractThaiMonthFromDateStr(dateTimeStr) {
+            if (!dateTimeStr) return '';
+            // Match DD/MM/YYYY or D/M/YYYY
+            const match = String(dateTimeStr).match(/\b\d{1,2}\/(\d{1,2})\/\d{2,4}\b/);
+            if (match && match[1]) {
+                const monthIndex = parseInt(match[1], 10) - 1;
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    return THAI_MONTHS[monthIndex];
+                }
+            }
+            return '';
+        }
+
+        function handleDateTimeInput(val) {
+            const thaiMonth = extractThaiMonthFromDateStr(val);
+            if (thaiMonth) {
+                document.getElementById('col_5').value = thaiMonth;
+            }
+            syncFromInputs();
+        }
+
+        // --- Plaza Name to Abbreviation Mapping ---
+        const PLAZA_ABBR = {
+            'ทับช้าง1': 'TC1',
+            'ทับช้าง2': 'TC2',
+            'ธัญบุรี1': 'TY1',
+            'ธัญบุรี2': 'TY2'
+        };
+
+        // --- Known Field Labels in the Toll System ---
+        const KNOWN_LABELS = [
+            'หมวดอักษร',
+            'เลขทะเบียน',
+            'จังหวัด',
+            'Class',
+            'สายทาง',
+            'ด่าน',
+            'ช่องทาง',
+            'Ref Trip Id',
+            'วันที่ผ่านทาง',
+            'ชั่วโมง-นาทีผ่านทาง',
+            'วินาทีเริ่มต้น',
+            'เหตุผลในการสร้างรายการผ่านทางใหม่'
+        ];
+
+        // --- Application State ---
+        let currentMode = 1;
+        let lastExtractedRefTripId = '';
+        let activeRow = null;
+        let sessionHistory = [];
+
+        window.onload = function () {
+            resetInputsToDefault();
+            loadSampleText(true);
+        };
+
+        // --- Global Paste (Ctrl+V) Anywhere on Page ---
+        window.addEventListener('paste', function (e) {
+            const target = e.target;
+            // Allow normal paste if user is editing one of the 10 individual column boxes
+            if (target && target.id && target.id.startsWith('col_')) {
+                return;
+            }
+
+            const clipboard = e.clipboardData || window.clipboardData;
+            if (!clipboard) return;
+
+            const pastedText = clipboard.getData('text/plain');
+            if (pastedText && pastedText.trim().length > 0) {
+                e.preventDefault();
+                const rawBox = document.getElementById('rawTextInput');
+                rawBox.value = pastedText;
+                parseTollSystemText(pastedText, true, false);
+            }
+        });
+
+        // Handle manual typing or pasting inside the textarea
+        let parseDebounceTimer = null;
+        function handleRawTextChange(val) {
+            clearTimeout(parseDebounceTimer);
+            parseDebounceTimer = setTimeout(() => {
+                if (val && val.trim().length > 5) {
+                    parseTollSystemText(val, false, true);
+                }
+            }, 150);
+        }
+
+        // --- Core Smart Parser: Extracts Exact Key-Values from Toll System Text ---
+        function parseTollSystemText(rawText, triggerAutoCopy = true, silentToast = false) {
+            if (!rawText || !rawText.trim()) return;
+
+            const text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            // Helper: Find label and get the value right after it
+            function getValueByLabel(labelVariants) {
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    for (const label of labelVariants) {
+                        // Case 1: Exact line match -> next line is the value
+                        if (line.toLowerCase() === label.toLowerCase()) {
+                            const nextLine = lines[i + 1] || '';
+                            // Make sure the next line isn't another label
+                            if (!KNOWN_LABELS.some(kl => kl.toLowerCase() === nextLine.toLowerCase())) {
+                                return nextLine.trim();
+                            }
+                        }
+                        // Case 2: Label and value on the same line (e.g., "หมวดอักษร กธ" or "หมวดอักษร\tกธ")
+                        const regex = new RegExp(`^${escapeRegExp(label)}[\\s:\\t]+(.+)$`, 'i');
+                        const match = line.match(regex);
+                        if (match && match[1]) {
+                            return match[1].trim();
+                        }
+                    }
+                }
+                return '';
+            }
+
+            let platePrefix = getValueByLabel(['หมวดอักษร']);
+            let plateNumber = getValueByLabel(['เลขทะเบียน']);
+            let province = getValueByLabel(['จังหวัด']);
+            let vehicleClass = getValueByLabel(['Class', 'ประเภท', 'ประเภทรถ']);
+            let highway = getValueByLabel(['สายทาง']);
+            let plaza = getValueByLabel(['ด่าน', 'ด่านฯ']);
+            let lane = getValueByLabel(['ช่องทาง', 'ช่องจราจร']);
+            let refTripId = getValueByLabel(['Ref Trip Id', 'RefTripId', 'Ref Trip ID']);
+            let dateStr = getValueByLabel(['วันที่ผ่านทาง', 'วันที่']);
+            let timeHm = getValueByLabel(['ชั่วโมง-นาทีผ่านทาง', 'เวลา']);
+            let seconds = getValueByLabel(['วินาทีเริ่มต้น', 'วินาที']);
+            let reason = getValueByLabel(['เหตุผลในการสร้างรายการผ่านทางใหม่', 'เหตุผล']);
+
+            // Fallback Regex in case user copied text without some headers
+            if (!refTripId) {
+                const refMatch = text.match(/([0-9]{25,30}[A-Z](?:_[0-9]+)?)/i);
+                if (refMatch) refTripId = refMatch[1];
+            }
+            if (!dateStr) {
+                const dateMatch = text.match(/([0-3][0-9]\/[0-1][0-9]\/20[2-3][0-9])/);
+                if (dateMatch) dateStr = dateMatch[1];
+            }
+            if (!timeHm) {
+                const timeMatch = text.match(/\b([0-2][0-9]:[0-5][0-9])\b/);
+                if (timeMatch) timeHm = timeMatch[1];
+            }
+            if (!plaza) {
+                const plazaMatch = text.match(/(ทับช้าง\s*[12]|ธัญบุรี\s*[12]|TC[12]|TY[12])/i);
+                if (plazaMatch) plaza = plazaMatch[1];
+            }
+
+            // Render extra metadata badges (Class, Highway, Lane, Reason)
+            renderExtraMetadataBadges({ vehicleClass, highway, plaza, lane, reason });
+
+            // Populate the 10 standard fields
+            populateRecord({
+                platePrefix,
+                plateNumber,
+                province,
+                plaza,
+                refTripId,
+                date: dateStr,
+                timeHm,
+                seconds,
+                highway,
+                lane,
+                vehicleClass,
+                reason
+            }, "จำแนกข้อมูลสำเร็จ 100% (ไร้ API)", !silentToast);
+
+            // Auto-Copy to clipboard if enabled
+            const autoCopy = document.getElementById('autoCopyToggle')?.checked;
+            if (triggerAutoCopy && autoCopy) {
+                copyEntireRow(false, true);
+                notify('จำแนกข้อมูล + คัดลอกทั้ง 10 ช่องอัตโนมัติแล้ว! กด Ctrl+V ใน Excel ได้เลย', 'success');
+            } else if (!silentToast) {
+                notify('จำแนกข้อมูลทั้ง 10 ช่องเรียบร้อยแล้ว!', 'success');
+            }
+        }
+
+        function renderExtraMetadataBadges(meta) {
+            const container = document.getElementById('parsedExtraBadges');
+            const badges = [];
+
+            if (meta.vehicleClass) {
+                badges.push(`<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200"><i class="fa-solid fa-car-side mr-1 text-slate-400"></i>${escapeAttr(meta.vehicleClass)}</span>`);
+            }
+            if (meta.highway) {
+                badges.push(`<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="fa-solid fa-road mr-1 text-indigo-400"></i>${escapeAttr(meta.highway)}</span>`);
+            }
+            if (meta.lane) {
+                badges.push(`<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">ช่องทาง: ${escapeAttr(meta.lane)}</span>`);
+            }
+            if (meta.reason) {
+                badges.push(`<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">${escapeAttr(meta.reason)}</span>`);
+            }
+
+            if (badges.length > 0) {
+                container.innerHTML = badges.join('');
+            } else {
+                container.innerHTML = `<span class="text-[11px] text-slate-400">ข้อมูลเสริม: รอรับข้อความ...</span>`;
+            }
+        }
+
+        // --- Ref Trip Id Sanitizer (Locks base at 31 chars + supports _1 / _N suffix) ---
+        function sanitizeRefTripId(rawRef) {
+            if (!rawRef) return '';
+            const trimmed = String(rawRef).trim();
+            if (trimmed === '---') return '---';
+
+            const cleanFull = trimmed.toUpperCase().replace(/[^0-9A-Z_]/g, '');
+
+            let basePart = cleanFull;
+            let suffixPart = '';
+
+            const suffixMatch = cleanFull.match(/^(.+?)(_[0-9]*)$/);
+            if (suffixMatch) {
+                basePart = suffixMatch[1].replace(/_/g, '');
+                suffixPart = suffixMatch[2].slice(0, 3);
+            } else {
+                basePart = cleanFull.replace(/_/g, '');
+            }
+
+            if (basePart.length > MAX_REF_LENGTH) {
+                const lastChar = basePart.slice(-1);
+                if (/[A-Z]/.test(lastChar)) {
+                    const digitsOnly = basePart.slice(0, -1).replace(/[^0-9]/g, '');
+                    basePart = digitsOnly.slice(0, MAX_REF_LENGTH - 1) + lastChar;
+                } else {
+                    basePart = basePart.slice(0, MAX_REF_LENGTH);
+                }
+            }
+
+            return basePart + suffixPart;
+        }
+
+        function updateRefLengthBadge() {
+            const val = document.getElementById('col_8')?.value || '';
+            const badge = document.getElementById('refLenBadge');
+            if (!badge) return;
+
+            if (val === '---') {
+                badge.textContent = '---';
+                badge.className = 'text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold';
+                return;
+            }
+
+            const hasSuffix = /_[0-9]+$/.test(val);
+            const baseLen = val.split('_')[0].length;
+
+            if (baseLen === MAX_REF_LENGTH && hasSuffix) {
+                const suffixStr = val.slice(val.indexOf('_'));
+                badge.textContent = `31${suffixStr} (${val.length})`;
+                badge.className = 'text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold';
+            } else if (baseLen === MAX_REF_LENGTH) {
+                badge.textContent = `${val.length}/${MAX_REF_LENGTH}`;
+                badge.className = 'text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold';
+            } else {
+                badge.textContent = `${val.length}/${MAX_REF_LENGTH}`;
+                badge.className = 'text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold';
+            }
+        }
+
+        function handleRefInput(inputEl) {
+            if (inputEl.value !== '---') {
+                inputEl.value = sanitizeRefTripId(inputEl.value);
+            }
+            updateRefLengthBadge();
+            syncFromInputs();
+        }
+
+        function toggleRefSuffixOne() {
+            if (currentMode === 3) {
+                notify('โหมด 3 ล็อกช่อง Ref Trip Id เป็น ---', 'info');
+                return;
+            }
+            const inputEl = document.getElementById('col_8');
+            let val = inputEl.value.trim();
+            if (!val || val === '---') {
+                notify('ยังไม่มีรหัส Ref Trip Id ให้ต่อท้าย _1', 'info');
+                return;
+            }
+            if (val.endsWith('_1')) {
+                val = val.slice(0, -2);
+                notify('นำ _1 ต่อท้ายออกแล้ว', 'info');
+            } else {
+                val = val.split('_')[0] + '_1';
+                notify('เติม _1 ต่อท้าย Ref Trip Id แล้ว', 'success');
+            }
+            inputEl.value = sanitizeRefTripId(val);
+            updateRefLengthBadge();
+            syncFromInputs();
+        }
+
+        function quickSetPlaza(code) {
+            document.getElementById('col_3').value = code;
+            syncFromInputs();
+            notify(`ตั้งค่าด่านเป็น ${code} แล้ว`, 'info');
+        }
+
+        // --- Mode Switching Logic ---
+        function selectMode(modeNum) {
+            currentMode = modeNum;
+            const preset = MODE_PRESETS[currentMode];
+
+            for (let m = 1; m <= 3; m++) {
+                const btn = document.getElementById(`modeBtn_${m}`);
+                if (m === currentMode) {
+                    btn.className = 'px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer';
+                } else {
+                    btn.className = 'px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer';
+                }
+            }
+
+            document.getElementById('currentModeLabel').textContent = preset.name;
+
+            document.getElementById('col_2').value = preset.col2;
+            document.getElementById('col_6').value = preset.col6;
+            document.getElementById('col_7').value = preset.col7;
+            document.getElementById('col_8').value = preset.overrideCol8 !== null ? preset.overrideCol8 : lastExtractedRefTripId;
+            document.getElementById('col_9').value = preset.col9;
+            document.getElementById('col_10').value = preset.col10;
+
+            updateRefLengthBadge();
+
+            if (activeRow) {
+                syncFromInputs();
+            }
+            notify(`สลับเป็น "${preset.name}" เรียบร้อย`, 'info');
+        }
+
+        // --- Convert Thai Plaza Name to Code ---
+        function toPlazaCode(rawPlaza) {
+            if (!rawPlaza) return '';
+            const trimmed = rawPlaza.trim();
+            const compact = trimmed.replace(/\s+/g, '');
+
+            if (PLAZA_ABBR[compact]) return PLAZA_ABBR[compact];
+            if (compact.includes('ทับช้าง1') || trimmed.toUpperCase() === 'TC1') return 'TC1';
+            if (compact.includes('ทับช้าง2') || trimmed.toUpperCase() === 'TC2') return 'TC2';
+            if (compact.includes('ธัญบุรี1') || trimmed.toUpperCase() === 'TY1') return 'TY1';
+            if (compact.includes('ธัญบุรี2') || trimmed.toUpperCase() === 'TY2') return 'TY2';
+            return trimmed;
+        }
+
+        // --- Populate 10 Columns ---
+        function populateRecord(data, statusText, addToHistory = false) {
+            const preset = MODE_PRESETS[currentMode];
+            const prefix = (data.platePrefix || '').trim();
+            const number = (data.plateNumber || '').trim();
+            const province = (data.province || '').trim();
+
+            lastExtractedRefTripId = sanitizeRefTripId(data.refTripId || '');
+
+            // 1. หมวดทะเบียน (หมวดอักษร + เลขทะเบียน + จังหวัด)
+            const c1 = [prefix, number, province].filter(Boolean).join(' ');
+
+            // 2. ตรวจสอบรายการผ่านทาง
+            const c2 = preset.col2;
+
+            // 3. ด่าน (TC1, TC2, TY1, TY2)
+            const c3 = toPlazaCode(data.plaza || '');
+
+            // 4. วัน เวลา (DD/MM/YYYY HH:mm:ss)
+            const dStr = (data.date || '').trim();
+            const hmStr = (data.timeHm || '').trim();
+            const sStr = (data.seconds || '').trim();
+            const fullTime = sStr ? (hmStr ? `${hmStr}:${sStr.padStart(2, '0')}` : sStr) : hmStr;
+            const c4 = [dStr, fullTime].filter(Boolean).join(' ');
+
+            // 5. ชื่อเดือนภาษาไทย (ดึงจากวันที่ในช่องที่ 4)
+            const c5 = extractThaiMonthFromDateStr(c4) || extractThaiMonthFromDateStr(dStr) || '';
+
+            // 6. รหัส/ค่าคงที่ตามโหมด
+            const c6 = preset.col6;
+
+            // 7. ประเภทตรวจสอบตามโหมด
+            const c7 = preset.col7;
+
+            // 8. Ref Trip Id (31 ตัว / _1) หรือ --- ในโหมด 3
+            const c8 = preset.overrideCol8 !== null ? preset.overrideCol8 : lastExtractedRefTripId;
+
+            // 9. การดำเนินการตามโหมด
+            const c9 = preset.col9;
+
+            // 10. หมายเหตุระบบตามโหมด
+            const c10 = preset.col10;
+
+            activeRow = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10];
+
+            for (let i = 0; i < 10; i++) {
+                document.getElementById(`col_${i + 1}`).value = activeRow[i];
+            }
+
+            updateRefLengthBadge();
+
+            const badge = document.getElementById('statusBadge');
+            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${statusText || 'พร้อมใช้งาน'}`;
+            badge.className = 'text-xs px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold flex items-center gap-1.5';
+
+            const infoParts = [];
+            if (c1) infoParts.push(`ทะเบียน: ${c1}`);
+            if (data.plaza || c3) infoParts.push(`ด่าน: ${data.plaza ? `${data.plaza} (${c3})` : c3}`);
+            if (lastExtractedRefTripId) infoParts.push(`Ref: ${lastExtractedRefTripId.length} ตัวอักษร`);
+            if (data.highway) infoParts.push(`สายทาง: ${data.highway}`);
+            if (data.lane) infoParts.push(`ช่องทาง: ${data.lane}`);
+
+            document.getElementById('metaSummary').innerHTML = `
+                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                <span>${infoParts.join(' • ') || 'จำแนกข้อมูลเรียบร้อย'}</span>
+            `;
+
+            renderTablePreview();
+
+            if (addToHistory && (c1 || lastExtractedRefTripId)) {
+                pushToHistory([...activeRow], lastExtractedRefTripId, currentMode);
+            }
+        }
+
+        function syncFromInputs() {
+            const cols = [];
+            for (let i = 1; i <= 10; i++) {
+                let val = document.getElementById(`col_${i}`).value;
+                if (i === 8 && val !== '---') {
+                    val = sanitizeRefTripId(val);
+                    document.getElementById('col_8').value = val;
+                }
+                cols.push(val);
+            }
+            if (currentMode !== 3) {
+                lastExtractedRefTripId = cols[7];
+            }
+            updateRefLengthBadge();
+            activeRow = cols;
+            renderTablePreview();
+        }
+
+        function resetInputsToDefault() {
+            const preset = MODE_PRESETS[currentMode];
+            lastExtractedRefTripId = '';
+            document.getElementById('col_1').value = '';
+            document.getElementById('col_2').value = preset.col2;
+            document.getElementById('col_3').value = '';
+            document.getElementById('col_4').value = '';
+            document.getElementById('col_5').value = '';
+            document.getElementById('col_6').value = preset.col6;
+            document.getElementById('col_7').value = preset.col7;
+            document.getElementById('col_8').value = preset.overrideCol8 !== null ? preset.overrideCol8 : '';
+            document.getElementById('col_9').value = preset.col9;
+            document.getElementById('col_10').value = preset.col10;
+            updateRefLengthBadge();
+            document.getElementById('metaSummary').innerHTML = `
+                <i class="fa-solid fa-bolt text-emerald-500"></i>
+                <span>พร้อมรับข้อความใหม่ (กด Ctrl+V บนหน้านี้ได้เลย)</span>
+            `;
+            document.getElementById('parsedExtraBadges').innerHTML = `<span class="text-[11px] text-slate-400">ข้อมูลเสริม: รอรับข้อความ...</span>`;
+        }
+
+        function clearRawTextOnly() {
+            const rawBox = document.getElementById('rawTextInput');
+            rawBox.value = '';
+            rawBox.focus();
+            notify('ล้างกล่องข้อความแล้ว กด Ctrl+V วางรายการใหม่ได้เลย', 'info');
+        }
+
+        function clearWorkspace() {
+            activeRow = null;
+            document.getElementById('rawTextInput').value = '';
+            resetInputsToDefault();
+
+            const badge = document.getElementById('statusBadge');
+            badge.innerHTML = '<i class="fa-regular fa-clock"></i> รอวางข้อความใหม่ (Ctrl+V)...';
+            badge.className = 'text-xs px-3 py-1 bg-slate-100 text-slate-600 rounded-full font-bold flex items-center gap-1.5';
+
+            renderTablePreview();
+            notify('ล้างหน้าจอเรียบร้อย พร้อมรับข้อความถัดไป', 'info');
+        }
+
+        function loadSampleText(silent = false) {
+            document.getElementById('rawTextInput').value = SAMPLE_RAW_TEXT;
+            parseTollSystemText(SAMPLE_RAW_TEXT, false, silent);
+            if (!silent) notify('โหลดและจำแนกข้อความตัวอย่าง (กธ 3407 กำแพงเพชร) เรียบร้อยแล้ว!', 'success');
+        }
+
+        // --- Table Preview Rendering ---
+        function renderTablePreview() {
+            const tbody = document.getElementById('previewTableBody');
+            const empty = document.getElementById('tableEmptyState');
+            const countBadge = document.getElementById('tableCountBadge');
+
+            if (!activeRow) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                countBadge.textContent = 'ว่าง';
+                countBadge.className = 'px-2.5 py-0.5 text-xs font-bold bg-slate-200 text-slate-700 rounded-full';
+                return;
+            }
+
+            empty.classList.add('hidden');
+            countBadge.textContent = '1 รายการ';
+            countBadge.className = 'px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full';
+
+            tbody.innerHTML = `
+                <tr class="bg-indigo-50/20 hover:bg-indigo-50/50 transition">
+                    ${activeRow.map((cell, idx) => `
+                        <td class="p-1.5 border-r border-slate-200 last:border-r-0">
+                            <input type="text"
+                                ${idx === 7 ? 'maxlength="34"' : ''}
+                                value="${escapeAttr(cell)}"
+                                oninput="updateFromTable(${idx}, this.value)"
+                                class="w-full px-2 py-1.5 rounded-lg border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white bg-transparent focus:outline-none text-slate-800 ${idx === 5 || idx === 7 ? 'font-mono-code text-xs' : 'text-sm'} ${idx === 0 || idx === 2 || idx === 4 || idx === 7 ? 'font-bold' : ''}"
+                            />
+                        </td>
+                    `).join('')}
+                </tr>
+            `;
+        }
+
+        function updateFromTable(idx, val) {
+            if (!activeRow) return;
+            if (idx === 3) {
+                const thaiMonth = extractThaiMonthFromDateStr(val);
+                if (thaiMonth) {
+                    activeRow[4] = thaiMonth;
+                    document.getElementById('col_5').value = thaiMonth;
+                    renderTablePreview();
+                }
+            }
+            if (idx === 7 && val !== '---') {
+                val = sanitizeRefTripId(val);
+                if (currentMode !== 3) {
+                    lastExtractedRefTripId = val;
+                }
+            }
+            activeRow[idx] = val;
+            document.getElementById(`col_${idx + 1}`).value = val;
+            if (idx === 7) {
+                updateRefLengthBadge();
+            }
+        }
+
+        // --- Session History Management ---
+        function pushToHistory(rowArray, savedRefId, modeUsed) {
+            // Avoid pushing duplicate consecutive identical entries
+            if (sessionHistory.length > 0) {
+                const top = sessionHistory[0];
+                if (top.row[0] === rowArray[0] && top.row[3] === rowArray[3] && top.row[7] === rowArray[7]) {
+                    return;
+                }
+            }
+
+            const timestamp = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            sessionHistory.unshift({
+                id: Date.now(),
+                time: timestamp,
+                row: rowArray,
+                refId: savedRefId,
+                mode: modeUsed
+            });
+            if (sessionHistory.length > 50) sessionHistory.pop();
+            renderHistoryList();
+        }
+
+        function renderHistoryList() {
+            const listEl = document.getElementById('historyList');
+            const badgeEl = document.getElementById('historyCountBadge');
+            badgeEl.textContent = sessionHistory.length;
+
+            if (sessionHistory.length === 0) {
+                listEl.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">ยังไม่มีประวัติการแกะข้อมูลในรอบนี้</div>`;
+                return;
+            }
+
+            listEl.innerHTML = sessionHistory.map((item, index) => `
+                <div class="px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 hover:bg-slate-50 transition text-xs">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <span class="font-mono-code text-slate-400">#${sessionHistory.length - index} (${item.time})</span>
+                        <span class="font-bold text-slate-800 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200">${escapeAttr(item.row[0] || '-')}</span>
+                        <span class="font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">${escapeAttr(item.row[2] || '-')}</span>
+                        <span class="text-slate-600">${escapeAttr(item.row[3] || '-')}</span>
+                        <span class="font-mono-code text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${escapeAttr(item.row[7] || '-')}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="restoreHistoryItem(${index})" class="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 text-indigo-600 border border-slate-200 font-semibold transition cursor-pointer">
+                            เรียกดู
+                        </button>
+                        <button onclick="copyHistoryItem(${index})" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition flex items-center gap-1 cursor-pointer">
+                            <i class="fa-regular fa-copy"></i> คัดลอกแถวนี้
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function restoreHistoryItem(index) {
+            const item = sessionHistory[index];
+            if (!item) return;
+            lastExtractedRefTripId = item.refId || '';
+            activeRow = [...item.row];
+            for (let i = 0; i < 10; i++) {
+                document.getElementById(`col_${i + 1}`).value = activeRow[i];
+            }
+            updateRefLengthBadge();
+            renderTablePreview();
+            notify(`เรียกคืนรายการ "${activeRow[0]}" แล้ว`, 'info');
+        }
+
+        function copyHistoryItem(index) {
+            const item = sessionHistory[index];
+            if (!item) return;
+            copyToClipboard(item.row.join('\t'), `คัดลอก "${item.row[0]}" ทั้ง 10 ช่องแล้ว!`);
+        }
+
+        function copyAllHistoryRows() {
+            if (sessionHistory.length === 0) {
+                notify('ยังไม่มีประวัติรายการให้คัดลอก', 'info');
+                return;
+            }
+            const lines = [...sessionHistory].reverse().map(item => item.row.join('\t'));
+            copyToClipboard(lines.join('\n'), `คัดลอกประวัติทั้งหมด ${lines.length} รายการเรียบร้อย!`);
+        }
+
+        function openClearHistoryModal() {
+            if (sessionHistory.length === 0) {
+                notify('ยังไม่มีประวัติให้ลบในขณะนี้', 'info');
+                return;
+            }
+            document.getElementById('confirmHistoryCount').textContent = sessionHistory.length;
+            document.getElementById('confirmClearHistoryModal').classList.remove('hidden');
+        }
+
+        function closeClearHistoryModal() {
+            document.getElementById('confirmClearHistoryModal').classList.add('hidden');
+        }
+
+        function confirmClearHistoryLog() {
+            sessionHistory = [];
+            renderHistoryList();
+            closeClearHistoryModal();
+            notify('ล้างประวัติในรอบนี้เรียบร้อยแล้ว', 'info');
+        }
+
+        // --- Clipboard & String Helpers ---
+        function copyToClipboard(str, msg, silent = false) {
+            const el = document.createElement('textarea');
+            el.value = str;
+            el.style.position = 'fixed';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+            el.select();
+            try {
+                document.execCommand('copy');
+                if (!silent) notify(msg || 'คัดลอกสำเร็จ!', 'success');
+            } catch (e) {
+                if (!silent) notify('ไม่สามารถคัดลอกได้', 'error');
+            }
+            document.body.removeChild(el);
+        }
+
+        function copyField(num) {
+            let val = document.getElementById(`col_${num}`).value;
+            if (!val) {
+                notify(`ช่องที่ ${num} ยังไม่มีข้อมูล`, 'info');
+                return;
+            }
+            if (num === 8 && val !== '---') {
+                val = sanitizeRefTripId(val);
+                document.getElementById('col_8').value = val;
+                updateRefLengthBadge();
+            }
+            copyToClipboard(val, `คัดลอกช่องที่ ${num} เรียบร้อย!`);
+        }
+
+        function copyEntireRow(withHeader = false, silent = false) {
+            const rowVals = [];
+            for (let i = 1; i <= 10; i++) {
+                let val = document.getElementById(`col_${i}`).value;
+                if (i === 8 && val !== '---') {
+                    val = sanitizeRefTripId(val);
+                    document.getElementById('col_8').value = val;
+                    updateRefLengthBadge();
+                }
+                rowVals.push(val);
+            }
+
+            if (!rowVals[0] && !rowVals[7]) {
+                if (!silent) notify('ยังไม่มีข้อมูลสำหรับคัดลอก กรุณาวางข้อความก่อน', 'error');
+                return;
+            }
+
+            const lines = [];
+            if (withHeader) {
+                lines.push([
+                    'หมวดทะเบียน',
+                    'ตรวจสอบรายการผ่านทาง',
+                    'ด่าน',
+                    'วัน เวลา',
+                    'เดือน',
+                    '00 0000 -',
+                    'ตรวจสอบการผ่านทางที่ผิดกฎหมาย',
+                    'Ref Trip Id',
+                    'สร้างรถจี้ท้ายจาก CCTV',
+                    'ยิงpostmanเท่านั้น'
+                ].join('\t'));
+            }
+            lines.push(rowVals.join('\t'));
+
+            copyToClipboard(lines.join('\n'), 'คัดลอกทั้ง 10 ช่องแล้ว! กด Ctrl+V วางใน Excel ได้เลย', silent);
+        }
+
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function escapeAttr(s) {
+            if (!s) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        let toastTimer;
+        function notify(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const text = document.getElementById('toastText');
+            const icon = document.getElementById('toastIcon');
+
+            text.textContent = msg;
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+            } else if (type === 'info') {
+                icon.className = 'fa-solid fa-circle-info text-indigo-400 text-lg';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2800);
+        }
+    </script>
+</body>
+</html>
