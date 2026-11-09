@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Logger - Paope Database Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #141414; color: white; }
+        .profile-card { transition: transform 0.2s ease-in-out; }
+        .profile-card:hover { transform: scale(1.05); }
+        .fade-in { animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .animate-pulse-once { animation: pulse 0.5s ease-in-out; }
+        
+        /* Table Sticky Handling */
+        .sticky-col-1 { position: sticky; left: 0; z-index: 30; background-color: #1a1a1a; }
+        .sticky-col-2 { position: sticky; left: 100px; z-index: 30; background-color: #1a1a1a; border-right: 1px solid #333; }
+        .sticky-header { position: sticky; top: 0; z-index: 40; }
+        .sticky-corner { position: sticky; top: 0; left: 0; z-index: 50; }
+        
+        /* Cell Hover Effect */
+        td:hover { background-color: rgba(255, 255, 255, 0.05); }
+        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+        /* Zoom In Animation for Modal */
+        .zoom-in { animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Loading Overlay */
+        #loading-overlay { display: none; }
+        #loading-overlay.active { display: flex; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="notification-area" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col items-center w-full max-w-md pointer-events-none gap-2"></div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[200] items-center justify-center flex-col gap-4">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
+        <span class="text-white font-bold animate-pulse">กำลังเชื่อมต่อฐานข้อมูล...</span>
+    </div>
+
+    <div id="profile-page" class="flex flex-col items-center justify-center min-h-screen fade-in p-4 pb-20 relative">
+        <div class="absolute top-6 right-6 flex gap-3">
+             <button onclick="openTeamDashboard()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-full font-bold shadow-lg transition flex items-center gap-2 border border-indigo-400/30">
+                <i class="fas fa-table"></i> ตารางงานรายปี
+            </button>
+            <button onclick="openSummaryModal()" class="bg-[#333] hover:bg-[#444] text-gray-300 px-4 py-2 rounded-full font-bold shadow-lg transition flex items-center gap-2 border border-gray-600">
+                <i class="fas fa-file-alt"></i> สร้างรายงาน
+            </button>
+        </div>
+        <h1 class="text-3xl md:text-5xl font-bold mb-4 text-center text-gray-100 drop-shadow-lg">Work Logger 2026</h1>
+        <p class="text-gray-500 mb-12">ระบบบันทึกงานส่วนตัว (Database Edition)</p>
+        
+        <div id="profile-grid" class="flex justify-center w-full gap-8 flex-wrap"></div>
+        
+        <div class="mt-12 text-gray-500 text-sm">คลิกที่รูปเพื่อเข้าสู่ระบบ</div>
+    </div>
+
+    <div id="team-modal" class="fixed inset-0 bg-black/95 z-[70] hidden flex items-center justify-center p-2 md:p-4 fade-in">
+        <div class="bg-[#181818] w-full max-w-[95vw] rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col h-auto max-h-[95vh] transition-all">
+            <div class="bg-[#222] p-4 border-b border-gray-700 flex justify-between items-center shrink-0">
+                <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3"><i class="fas fa-th text-indigo-500"></i> ตารางสรุปงาน (2026)</h2>
+                <button onclick="closeTeamDashboard()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 w-8 h-8 rounded-full"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-4 bg-[#1a1a1a] border-b border-gray-800 flex items-center gap-4 shrink-0">
+                <div class="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-lg border border-gray-700">
+                    <span class="text-gray-400 whitespace-nowrap"><i class="fas fa-calendar-alt mr-2"></i>เลือกเดือน:</span>
+                    <input type="month" id="team-month" class="bg-transparent text-white font-bold outline-none cursor-pointer" onchange="renderMatrixTable()">
+                </div>
+                <div class="text-xs text-gray-500 ml-auto hidden md:block">* คลิกที่วันที่เพื่อดูรายละเอียดรายวัน</div>
+            </div>
+
+            <div class="overflow-auto bg-[#141414] relative scroll-smooth custom-scrollbar" id="matrix-container">
+                <table class="w-max text-left border-collapse">
+                    <thead id="matrix-header" class="bg-[#202020] text-gray-400 text-xs uppercase sticky-header shadow-lg"></thead>
+                    <tbody id="matrix-body" class="text-gray-300 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="daily-modal" class="fixed inset-0 bg-black/90 z-[80] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-[#181818] w-full max-w-2xl max-h-[90vh] rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col zoom-in">
+            <div class="bg-[#222] p-4 border-b border-gray-700 flex justify-between items-center shrink-0">
+                <div>
+                    <h2 id="daily-modal-title" class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-calendar-day text-indigo-500"></i> <span>-</span>
+                    </h2>
+                    <span id="daily-modal-shift" class="text-xs text-gray-400 font-mono mt-1 block"></span>
+                </div>
+                <button onclick="closeDailyModal()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 w-8 h-8 rounded-full transition"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div id="daily-modal-content" class="p-4 overflow-y-auto space-y-3 custom-scrollbar"></div>
+
+            <div class="bg-[#1a1a1a] p-4 border-t border-gray-800 flex justify-between items-center shrink-0">
+                <span class="text-gray-400 text-sm font-bold uppercase">Total Point</span>
+                <span id="daily-modal-total" class="text-2xl font-bold text-indigo-400 drop-shadow-md font-mono">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="summary-modal" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-[#181818] w-full max-w-xl max-h-[90vh] rounded-xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col transition-all duration-300">
+            <div class="bg-[#222] p-4 border-b border-gray-700 flex justify-between items-center shrink-0">
+                <h2 class="text-xl font-bold text-white"><i class="fas fa-clipboard-list mr-2 text-indigo-400"></i>สร้างรายงาน (Daily Report)</h2>
+                <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto flex-1 flex flex-col gap-5">
+                <div class="bg-black/30 p-4 rounded-lg border border-gray-700 space-y-3">
+                    <div class="flex items-center gap-2 mb-2"><span class="bg-indigo-600 text-xs font-bold px-2 py-1 rounded text-white">STEP 1</span><h3 class="text-sm text-gray-300 font-bold">เลือกวันที่และกะ</h3></div>
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label class="block text-gray-500 text-[10px] uppercase mb-1">วันที่</label>
+                            <input type="date" id="summary-date" class="w-full bg-[#2a2a2a] border border-gray-600 rounded px-3 py-2 text-white text-sm outline-none focus:border-indigo-500 font-bold" onchange="renderSummaryUserList()">
+                        </div>
+                        <div class="w-1/3">
+                            <label class="block text-gray-500 text-[10px] uppercase mb-1">กะ</label>
+                            <select id="summary-shift" class="w-full bg-[#2a2a2a] border border-gray-600 rounded px-3 py-2 text-white text-sm outline-none focus:border-indigo-500 font-bold">
+                                <option value="เช้า (A)">เช้า (A)</option>
+                                <option value="บ่าย (B)">บ่าย (B)</option>
+                                <option value="ดึก (C)">ดึก (C)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black/30 p-4 rounded-lg border border-gray-700">
+                    <div class="flex items-center gap-2 mb-3"><span class="bg-indigo-600 text-xs font-bold px-2 py-1 rounded text-white">STEP 2</span><h3 class="text-sm text-gray-300 font-bold">เช็คสถานะ</h3></div>
+                    <div id="summary-user-list" class="space-y-2"></div>
+                </div>
+                
+                <button onclick="generateSummaryText()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-lg font-bold shadow-lg transition flex items-center justify-center gap-2 shrink-0 group ring-1 ring-indigo-400/50">
+                    <i class="fas fa-magic group-hover:animate-pulse"></i> สร้างข้อความตัวอย่าง (Preview)
+                </button>
+
+                <div id="summary-result-section" class="hidden flex flex-col gap-4 animate-pulse-once">
+                    <div class="relative flex flex-col">
+                         <label class="text-gray-400 text-xs font-bold mb-1 flex justify-between items-center"><span><i class="fas fa-file-alt mr-1"></i>ข้อความรายงาน</span><span class="text-[10px] text-green-400 bg-green-900/30 px-2 rounded-full">แก้ไขได้</span></label>
+                        <textarea id="summary-text" class="w-full h-40 bg-black/50 border border-gray-600 rounded p-4 text-gray-300 font-mono text-sm leading-relaxed resize-none focus:outline-none focus:border-indigo-500 shadow-inner ring-1 ring-gray-700"></textarea>
+                    </div>
+                    <button onclick="copySummaryAndClose()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white py-3 rounded-lg font-bold transition flex justify-center items-center gap-2 shadow-lg mb-2">
+                        <i class="fas fa-copy"></i> คัดลอกและปิด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-page" class="hidden min-h-screen bg-[#141414] pb-20">
+        <nav class="bg-black/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40 px-4 py-3 flex justify-between items-center shadow-lg">
+            <div class="flex items-center gap-3">
+                <div id="nav-avatar" class="w-10 h-10 rounded bg-gray-500 overflow-hidden border border-white/50"></div>
+                <div class="flex flex-col">
+                    <span id="nav-username" class="font-bold text-lg leading-none text-white">User</span>
+                    <span class="text-[10px] text-green-400 font-bold uppercase tracking-wider">● Online</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="bg-red-900/30 hover:bg-red-600 text-red-200 hover:text-white text-sm px-4 py-2 rounded font-bold transition border border-red-800/50"><i class="fas fa-sign-out-alt mr-1"></i> ออก</button>
+        </nav>
+
+        <div class="max-w-4xl mx-auto p-4 md:p-6">
+            <div class="flex gap-6 border-b border-gray-800 mb-6">
+                <button onclick="switchTab('form')" id="tab-form" class="pb-3 border-b-2 border-red-600 text-white font-bold px-2 text-lg transition-colors"><i class="fas fa-edit mr-2"></i>บันทึกงาน</button>
+                <button onclick="switchTab('history')" id="tab-history" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-gray-300 font-bold px-2 text-lg transition-colors"><i class="fas fa-calendar-alt mr-2"></i>ตารางงาน</button>
+            </div>
+
+            <div id="section-form" class="fade-in">
+                <form id="work-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    <input type="hidden" id="edit-id" value="">
+                    
+                    <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between border border-gray-700 shadow-md">
+                        <div class="flex items-center gap-3 w-full">
+                            <span class="text-gray-200 font-bold whitespace-nowrap"><i class="fas fa-calendar-day mr-2 text-red-500"></i> วันที่:</span>
+                            <input type="date" id="work-date" class="w-full bg-gray-950 text-white px-4 py-2 rounded border border-gray-600 outline-none focus:border-red-500 font-mono" required>
+                        </div>
+                        <div class="flex items-center gap-3 w-full">
+                            <span class="text-gray-200 font-bold whitespace-nowrap"><i class="fas fa-user-check mr-2 text-green-500"></i> สถานะ:</span>
+                            <select id="work-status" class="w-full bg-gray-950 text-white px-4 py-2 rounded border border-gray-600 outline-none focus:border-green-500 font-bold" onchange="toggleWorkInputs()">
+                                <option value="work" class="text-green-400">✅ มาทำงาน</option>
+                                <option value="vacation" class="text-yellow-400">🏖️ ลาพักร้อน</option>
+                                <option value="sick" class="text-red-400">🤒 ลาป่วย</option>
+                                <option value="personal" class="text-orange-400">📝 ลากิจ</option>
+                                <option value="off" class="text-gray-400">🏠 วันหยุด</option>
+                                <option value="swap" class="text-blue-400">🔄 สลับกะ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="work-metrics-section" class="grid gap-4 transition-all duration-300">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-[#1a1a1a] p-4 rounded-xl border border-rose-900/30 hover:border-rose-600 transition group shadow-sm">
+                                <label class="flex justify-between items-center cursor-pointer mb-2"><span class="font-bold text-rose-400 text-xl">MLPR</span><input type="checkbox" id="check-mlpr" class="accent-rose-600 w-6 h-6 rounded cursor-pointer" onchange="toggleInput('mlpr')"></label>
+                                <input type="number" id="val-mlpr" class="hidden w-full bg-black/40 border border-gray-600 rounded p-2 text-center text-white text-xl font-bold focus:border-rose-500 outline-none animate-pulse-once" placeholder="ระบุจำนวน">
+                            </div>
+                            <div class="bg-[#1a1a1a] p-4 rounded-xl border border-blue-900/30 hover:border-blue-600 transition group shadow-sm">
+                                <label class="flex justify-between items-center cursor-pointer mb-2"><span class="font-bold text-blue-400 text-xl">MNPR</span><input type="checkbox" id="check-mnpr" class="accent-blue-600 w-6 h-6 rounded cursor-pointer" onchange="toggleInput('mnpr')"></label>
+                                <input type="number" id="val-mnpr" class="hidden w-full bg-black/40 border border-gray-600 rounded p-2 text-center text-white text-xl font-bold focus:border-blue-500 outline-none animate-pulse-once" placeholder="ระบุจำนวน">
+                            </div>
+                            <div class="bg-[#1a1a1a] p-4 rounded-xl border border-emerald-900/30 hover:border-emerald-600 transition group shadow-sm">
+                                <label class="flex justify-between items-center cursor-pointer mb-2"><span class="font-bold text-emerald-400 text-xl">Re-Conf</span><input type="checkbox" id="check-reconfirmed" class="accent-emerald-600 w-6 h-6 rounded cursor-pointer" onchange="toggleInput('reconfirmed')"></label>
+                                <input type="number" id="val-reconfirmed" class="hidden w-full bg-black/40 border border-gray-600 rounded p-2 text-center text-white text-xl font-bold focus:border-emerald-500 outline-none animate-pulse-once" placeholder="ระบุจำนวน">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg border border-gray-800 text-center hover:bg-[#222] transition"><label class="text-indigo-400 font-bold text-sm block mb-2">TXN</label><input type="number" id="val-txn" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-center text-white text-lg font-bold focus:border-indigo-500 outline-none" placeholder="-"></div>
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg border border-gray-800 text-center hover:bg-[#222] transition"><label class="text-orange-400 font-bold text-sm block mb-2">LOG</label><input type="number" id="val-log" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-center text-white text-lg font-bold focus:border-orange-500 outline-none" placeholder="-"></div>
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg border border-gray-800 text-center hover:bg-[#222] transition"><label class="text-pink-400 font-bold text-sm block mb-2">น้องถาม</label><input type="number" id="val-temp" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-center text-white text-lg font-bold focus:border-pink-500 outline-none" placeholder="-"></div>
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg border border-gray-800 text-center hover:bg-[#222] transition"><label class="text-teal-400 font-bold text-sm block mb-2">QC</label><input type="number" id="val-qc" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-center text-white text-lg font-bold focus:border-teal-500 outline-none" placeholder="-"></div>
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg border border-gray-800 text-center col-span-2 md:col-span-1 hover:bg-[#222] transition"><label class="text-yellow-400 font-bold text-sm block mb-2">ขบวนเสด็จ</label><input type="number" id="val-royal" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-center text-white text-lg font-bold focus:border-yellow-500 outline-none" placeholder="-"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="button" onclick="resetForm()" class="flex-1 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white font-bold transition"><i class="fas fa-undo mr-2"></i> ล้างค่า</button>
+                        <button type="submit" id="btn-submit" class="flex-[3] py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 rounded-lg text-white font-bold text-xl shadow-lg shadow-red-900/30 transform active:scale-95 transition"><i class="fas fa-save mr-2"></i> บันทึกข้อมูล</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="section-history" class="hidden fade-in space-y-4">
+                <div class="flex items-center justify-between bg-[#1a1a1a] p-4 rounded-xl border border-gray-700">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-red-600/20 text-red-500 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-calendar-alt text-xl"></i></div>
+                        <div><h3 class="text-white font-bold text-lg leading-none">ตารางงานรายเดือน</h3><span class="text-xs text-gray-400">เลือกเดือนเพื่อดู/บันทึกงาน</span></div>
+                    </div>
+                    <input type="month" id="history-month" class="bg-black text-white px-4 py-2 rounded border border-gray-600 outline-none focus:border-red-500 font-bold" onchange="renderMyHistory()">
+                </div>
+                <div class="bg-[#181818] rounded-xl border border-gray-800 overflow-hidden shadow-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-400">
+                            <thead class="bg-black text-xs uppercase text-gray-500 font-bold tracking-wider sticky top-0 z-20 shadow-md">
+                                <tr>
+                                    <th class="px-2 py-4 text-center w-24 bg-black">
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span>DAY</span>
+                                            <button onclick="toggleSumRow()" class="text-[10px] bg-gray-800 hover:bg-gray-700 text-gray-300 px-2 py-0.5 rounded border border-gray-600 transition flex items-center gap-1">
+                                                <i class="fas fa-calculator"></i> SUM
+                                            </button>
+                                        </div>
+                                    </th>
+                                    <th class="px-2 py-4 text-center text-rose-400 bg-black">ML</th>
+                                    <th class="px-2 py-4 text-center text-blue-400 bg-black">MN</th>
+                                    <th class="px-2 py-4 text-center text-emerald-400 bg-black">Re</th>
+                                    <th class="px-2 py-4 text-center text-indigo-400 bg-black">TXN</th>
+                                    <th class="px-2 py-4 text-center text-orange-400 bg-black">Log</th>
+                                    <th class="px-2 py-4 text-center text-pink-400 bg-black">น้องถาม</th>
+                                    <th class="px-2 py-4 text-center text-teal-400 bg-black">QC</th>
+                                    <th class="px-2 py-4 text-center text-yellow-400 bg-black">ขบวนเสด็จ</th>
+                                    <th class="px-2 py-4 text-center text-white bg-[#222] border-l border-gray-800">Total</th>
+                                    <th class="px-4 py-4 text-right bg-black">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" class="divide-y divide-gray-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        // ⚠️ อย่าลืมเอา URL ของ App Script ที่ Deploy ใหม่มาใส่ตรงนี้
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyasO-VaHRWj52J-rNEJCaNtvrwcL59RJoao6gdtFpro41m2WCNz62-z-7TeDN0-xT4qA/exec"; 
+        
+        // ================= DATA & STATE =================
+        const ORDERED_USER_KEYS = ['paope'];
+        const TASK_CONFIG = [
+            { key: 'mlpr', label: 'MLPR', color: 'text-rose-400', bg: 'bg-rose-900/10' },
+            { key: 'mnpr', label: 'MNPR', color: 'text-blue-400', bg: 'bg-blue-900/10' },
+            { key: 'reconfirmed', label: 'Re-Confirm', color: 'text-emerald-400', bg: 'bg-emerald-900/10' },
+            { key: 'log', label: 'LOG', color: 'text-orange-400', bg: 'bg-orange-900/10' },
+            { key: 'txn', label: 'TXN', color: 'text-indigo-400', bg: 'bg-indigo-900/10' },
+            { key: 'qc', label: 'QC TEMP', color: 'text-teal-400', bg: 'bg-teal-900/10' },
+            { key: 'temp', label: 'น้องถาม', color: 'text-pink-400', bg: 'bg-pink-900/10' },
+            { key: 'royal', label: 'ขบวนเสด็จ', color: 'text-yellow-400', bg: 'bg-yellow-900/10' }
+        ];
+
+        // 👇👇👇 แก้ไขตรงนี้: ใส่ ID รูปจาก Google Drive 👇👇👇
+        const defaultUsers = {
+            'paope': { 
+                name: 'น้องเป๋าเป้', 
+                shortName: 'เป๋าเป้',
+                avatarId: '15xNXYZxTVndtEcL9_1W5HFn6G4t3fWyr'  // <--- ใส่ ID ตรงนี้ครับ เช่น '1A2b3C...'
+            }
+        };
+        
+        let users = defaultUsers; 
+        let currentUser = null;
+        let records = []; 
+
+        // ================= INIT =================
+        window.addEventListener('DOMContentLoaded', () => {
+            initDate();
+            renderProfileGrid();
+            syncData(); 
+        });
+
+        // 👇👇👇 ฟังก์ชันเลือกรูป (แก้ให้แล้ว) 👇👇👇
+        function getAvatarUrl(uid) {
+            const u = users[uid];
+            // ถ้ามี avatarId ใส่ไว้ ให้ดึงรูปจาก Google Drive
+            if (u && u.avatarId && u.avatarId.length > 5) {
+                // sz=w400 คือปรับขนาดรูปกว้าง 400px (โหลดเร็ว)
+                return `https://drive.google.com/thumbnail?id=${u.avatarId}&sz=w400`;
+            }
+            // ถ้าไม่มี ID ให้ใช้รูปการ์ตูนสุ่มเหมือนเดิม
+            return `https://api.dicebear.com/9.x/avataaars/svg?seed=${uid}&backgroundColor=b6e3f4`;
+        }
+
+        function toggleLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if(show) overlay.classList.add('active'); else overlay.classList.remove('active');
+        }
+
+        function syncData() {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.length < 10) return;
+            toggleLoading(true);
+            fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime())
+                .then(res => res.json())
+                .then(data => {
+                    if (data.logs) {
+                        records = data.logs;
+                        localStorage.setItem('work_logs', JSON.stringify(records));
+                    }
+                    if(!document.getElementById('section-history').classList.contains('hidden')) renderMyHistory();
+                    toggleLoading(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    toggleLoading(false);
+                    records = JSON.parse(localStorage.getItem('work_logs')) || [];
+                });
+        }
+
+        function initDate() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentMonth = now.toISOString().slice(0, 7);
+            document.querySelectorAll('input[type="date"]').forEach(inp => inp.value = today);
+            
+            const hMonth = document.getElementById('history-month');
+            if(hMonth) hMonth.value = currentMonth;
+            const tMonth = document.getElementById('team-month');
+            if(tMonth) tMonth.value = currentMonth;
+        }
+
+        // ================= HISTORY RENDER =================
+        function renderMyHistory() {
+            const tb = document.getElementById('history-table-body');
+            tb.innerHTML = '';
+            
+            const monthInput = document.getElementById('history-month').value; 
+            if (!monthInput) return;
+            
+            const [year, month] = monthInput.split('-');
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const fmt = (n) => n > 0 ? `<span class="text-white font-bold">${n.toLocaleString()}</span>` : `<span class="text-gray-500/30 font-thin">-</span>`;
+
+            let mTotal = { ml:0, mn:0, re:0, txn:0, log:0, temp:0, qc:0, roy:0, all:0 };
+            records.forEach(r => {
+                if(r.userId === currentUser.id && r.workDate.startsWith(`${year}-${month}`)) {
+                    if(!r.status || r.status === 'work') {
+                        mTotal.ml += (r.mlpr||0); mTotal.mn += (r.mnpr||0); mTotal.re += (r.reconfirmed||0);
+                        mTotal.txn += (r.txn||0); mTotal.log += (r.log||0); mTotal.temp += (r.temp||0);
+                        mTotal.qc += (r.qc||0); mTotal.roy += (r.royal||0);
+                    }
+                }
+            });
+            mTotal.all = mTotal.ml + mTotal.mn + mTotal.re + mTotal.txn + mTotal.log + mTotal.temp + mTotal.qc + mTotal.roy;
+
+            const sumRow = document.createElement('tr');
+            sumRow.id = "month-summary-row";
+            sumRow.className = "hidden bg-[#252525] border-b-2 border-gray-600 font-bold shadow-lg sticky top-[60px] z-10"; 
+            sumRow.innerHTML = `
+                <td class="px-4 py-3 text-center text-gray-400 text-xs uppercase tracking-widest">Sum</td>
+                <td class="px-2 py-3 text-center text-rose-400 text-lg bg-rose-900/10">${fmt(mTotal.ml)}</td>
+                <td class="px-2 py-3 text-center text-blue-400 text-lg bg-blue-900/10">${fmt(mTotal.mn)}</td>
+                <td class="px-2 py-3 text-center text-emerald-400 text-lg bg-emerald-900/10">${fmt(mTotal.re)}</td>
+                <td class="px-2 py-3 text-center text-indigo-400 text-lg bg-indigo-900/10">${fmt(mTotal.txn)}</td>
+                <td class="px-2 py-3 text-center text-orange-400 text-lg bg-orange-900/10">${fmt(mTotal.log)}</td>
+                <td class="px-2 py-3 text-center text-pink-400 text-lg bg-pink-900/10">${fmt(mTotal.temp)}</td>
+                <td class="px-2 py-3 text-center text-teal-400 text-lg bg-teal-900/10">${fmt(mTotal.qc)}</td>
+                <td class="px-2 py-3 text-center text-yellow-500 text-lg bg-yellow-900/10">${fmt(mTotal.roy)}</td>
+                <td class="px-2 py-3 text-center text-white bg-[#333] border-l border-gray-600 text-lg shadow-inner">${fmt(mTotal.all)}</td>
+                <td class="px-4 py-3 bg-black"></td>
+            `;
+            tb.appendChild(sumRow);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = day.toString().padStart(2, '0');
+                const fullDate = `${year}-${month}-${dayStr}`;
+                const rec = records.find(r => r.userId === currentUser.id && r.workDate === fullDate);
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-[#202020] transition border-b border-gray-800 h-12 group"; 
+                
+                let rowContent = "", actionBtn = "";
+
+                if (rec) {
+                    tr.classList.add("bg-gray-900/20");
+                    let dSum = 0;
+                    if (!rec.status || rec.status === 'work') {
+                        dSum = (rec.mlpr||0) + (rec.mnpr||0) + (rec.reconfirmed||0) + (rec.txn||0) + (rec.log||0) + (rec.temp||0) + (rec.qc||0) + (rec.royal||0);
+                        rowContent = `
+                            <td class="px-2 py-2 text-center text-rose-300 font-mono bg-rose-900/20 border-x border-gray-800/50">${fmt(rec.mlpr)}</td>
+                            <td class="px-2 py-2 text-center text-blue-300 font-mono bg-blue-900/20 border-r border-gray-800/50">${fmt(rec.mnpr)}</td>
+                            <td class="px-2 py-2 text-center text-emerald-300 font-mono bg-emerald-900/20 border-r border-gray-800/50">${fmt(rec.reconfirmed)}</td>
+                            <td class="px-2 py-2 text-center text-indigo-300 font-mono bg-indigo-900/20 border-r border-gray-800/50">${fmt(rec.txn)}</td>
+                            <td class="px-2 py-2 text-center text-orange-300 font-mono bg-orange-900/20 border-r border-gray-800/50">${fmt(rec.log)}</td>
+                            <td class="px-2 py-2 text-center text-pink-300 font-mono bg-pink-900/20 border-r border-gray-800/50">${fmt(rec.temp)}</td>
+                            <td class="px-2 py-2 text-center text-teal-300 font-mono bg-teal-900/20 border-r border-gray-800/50">${fmt(rec.qc)}</td>
+                            <td class="px-2 py-2 text-center text-yellow-300 font-mono bg-yellow-900/20 border-r border-gray-800/50">${fmt(rec.royal)}</td>
+                            <td class="px-2 py-2 text-center text-white font-bold bg-[#252525] border-l border-gray-700 shadow-sm">${dSum > 0 ? dSum.toLocaleString() : '-'}</td>
+                        `;
+                    } else {
+                        let statusText = '', colorClass = 'text-gray-500';
+                        switch(rec.status) {
+                            case 'vacation': statusText = '🏖️ ลาพักร้อน'; colorClass = 'text-yellow-400 bg-yellow-900/10'; break;
+                            case 'sick': statusText = '🤒 ลาป่วย'; colorClass = 'text-red-400 bg-red-900/10'; break;
+                            case 'personal': statusText = '📝 ลากิจ'; colorClass = 'text-orange-400 bg-orange-900/10'; break;
+                            case 'off': statusText = '🏠 วันหยุด'; colorClass = 'text-gray-400 bg-gray-800'; break;
+                            case 'swap': statusText = '🔄 สลับกะ'; colorClass = 'text-blue-400 bg-blue-900/10'; break;
+                            default: statusText = rec.status;
+                        }
+                        rowContent = `<td colspan="9" class="px-4 py-2 text-center font-bold ${colorClass}">${statusText}</td>`;
+                    }
+                    actionBtn = `<button onclick="delRec('${rec.id}', '${fullDate}')" class="text-red-500 hover:text-white px-3 py-1 rounded hover:bg-red-600 transition text-xs"><i class="fas fa-trash"></i> ลบ</button>`;
+                } else {
+                    rowContent = `<td colspan="9" class="px-2 py-2 text-center text-gray-700/20 text-xs italic cursor-pointer hover:bg-[#252525]" onclick="loadForAdd('${fullDate}')"><i class="fas fa-plus-circle mr-1"></i> คลิกเพื่อเพิ่มข้อมูล</td>`;
+                    actionBtn = `<button onclick="loadForAdd('${fullDate}')" class="text-gray-600 hover:text-green-400 px-3 py-1 rounded border border-gray-700 hover:border-green-500 transition text-xs"><i class="fas fa-plus"></i> เพิ่ม</button>`;
+                }
+                tr.innerHTML = `<td class="px-4 py-2 text-center"><div class="w-8 h-8 flex items-center justify-center rounded-full mx-auto ${rec ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50' : 'bg-gray-800 text-gray-500'}">${day}</div></td>${rowContent}<td class="px-4 py-2 text-right">${actionBtn}</td>`;
+                tb.appendChild(tr);
+            }
+        }
+
+        function toggleSumRow() {
+            const row = document.getElementById('month-summary-row');
+            if (row) row.classList.toggle('hidden');
+        }
+
+        function loadForAdd(dateStr) {
+            switchTab('form');
+            document.getElementById('work-date').value = dateStr;
+            resetFormOnlyValues();
+            document.getElementById('edit-id').value = '';
+            showNotification(`กำลังบันทึกข้อมูลวันที่ ${dateStr}`, 'success');
+        }
+
+        // ================= FORM LOGIC =================
+        function switchTab(t) {
+            const f = document.getElementById('section-form'), h = document.getElementById('section-history');
+            const tf = document.getElementById('tab-form'), th = document.getElementById('tab-history');
+            if(t==='form') { 
+                f.classList.remove('hidden'); h.classList.add('hidden'); 
+                tf.className="pb-3 border-b-2 border-red-600 text-white font-bold px-2 text-lg"; 
+                th.className="pb-3 border-b-2 border-transparent text-gray-500 hover:text-gray-300 font-bold px-2 text-lg"; 
+            } else { 
+                f.classList.add('hidden'); h.classList.remove('hidden'); 
+                th.className="pb-3 border-b-2 border-red-600 text-white font-bold px-2 text-lg"; 
+                tf.className="pb-3 border-b-2 border-transparent text-gray-500 hover:text-gray-300 font-bold px-2 text-lg"; 
+                renderMyHistory(); 
+            }
+        }
+
+        function toggleWorkInputs() {
+            const status = document.getElementById('work-status').value;
+            const metricsDiv = document.getElementById('work-metrics-section');
+            if (status === 'work') { metricsDiv.classList.remove('hidden', 'opacity-50', 'pointer-events-none'); } else { metricsDiv.classList.add('hidden'); }
+        }
+
+        function toggleInput(k) { 
+            const c=document.getElementById(`check-${k}`),v=document.getElementById(`val-${k}`); 
+            if(c.checked){v.classList.remove('hidden');v.focus();}else{v.classList.add('hidden');v.value='';} 
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('work-date').value;
+            const statusVal = document.getElementById('work-status').value;
+            const editId = document.getElementById('edit-id').value;
+
+            if (!editId) {
+                const existing = records.find(r => r.userId === currentUser.id && r.workDate === dateVal);
+                if (existing) { showNotification('❌ วันนี้บันทึกข้อมูลไปแล้ว!', 'error'); return; }
+            }
+
+            const data = {
+                id: editId || Date.now().toString(),
+                timestamp: new Date().toISOString(),
+                workDate: dateVal,
+                dateDisplay: new Date(dateVal).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }),
+                userId: currentUser.id,
+                action: 'save_log', 
+                status: statusVal,
+                mlpr: (statusVal === 'work' && document.getElementById('check-mlpr').checked) ? Number(document.getElementById('val-mlpr').value) : 0,
+                mnpr: (statusVal === 'work' && document.getElementById('check-mnpr').checked) ? Number(document.getElementById('val-mnpr').value) : 0,
+                reconfirmed: (statusVal === 'work' && document.getElementById('check-reconfirmed').checked) ? Number(document.getElementById('val-reconfirmed').value) : 0,
+                txn: (statusVal === 'work') ? Number(document.getElementById('val-txn').value) : 0,
+                log: (statusVal === 'work') ? Number(document.getElementById('val-log').value) : 0,
+                temp: (statusVal === 'work') ? Number(document.getElementById('val-temp').value) : 0,
+                qc: (statusVal === 'work') ? Number(document.getElementById('val-qc').value) : 0,
+                royal: (statusVal === 'work') ? Number(document.getElementById('val-royal').value) : 0
+            };
+
+            if(editId) { const idx = records.findIndex(r => r.id === editId); if(idx !== -1) records[idx] = data; }
+            else { records.unshift(data); }
+            localStorage.setItem('work_logs', JSON.stringify(records));
+
+            toggleLoading(true);
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // แก้ Header กัน CORS
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                toggleLoading(false);
+                showNotification('บันทึกข้อมูลลงฐานข้อมูลเรียบร้อย', 'success');
+            })
+            .catch(err => {
+                toggleLoading(false);
+                console.error(err);
+                showNotification('บันทึก local แล้ว แต่ส่ง Database ไม่สำเร็จ', 'error');
+            });
+            
+            if(editId) switchTab('history'); else resetForm();
+        }
+
+        function delRec(id, dateVal) {
+            if(!confirm('ยืนยันลบข้อมูลนี้?')) return;
+            records = records.filter(r => r.id !== id);
+            localStorage.setItem('work_logs', JSON.stringify(records));
+            renderMyHistory();
+            
+            toggleLoading(true);
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'delete_log', workDate: dateVal })
+            })
+            .then(() => {
+                toggleLoading(false);
+                showNotification('ลบข้อมูลเรียบร้อย', 'success');
+            })
+            .catch(err => {
+                toggleLoading(false);
+                console.error(err);
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('work-form').reset(); document.getElementById('edit-id').value = '';
+            document.getElementById('work-status').value = 'work'; toggleWorkInputs(); resetFormOnlyValues(); initDate();
+        }
+
+        function resetFormOnlyValues() {
+            ['mlpr','mnpr','reconfirmed'].forEach(k => { document.getElementById(`val-${k}`).classList.add('hidden'); document.getElementById(`val-${k}`).value = ''; document.getElementById(`check-${k}`).checked = false; });
+            ['txn','log','temp','qc','royal'].forEach(k => document.getElementById(`val-${k}`).value = '');
+            const btn = document.getElementById('btn-submit'); btn.innerHTML = '<i class="fas fa-save mr-2"></i> บันทึกข้อมูล'; btn.className = "flex-[3] py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 rounded-lg text-white font-bold text-xl shadow-lg shadow-red-900/30 transform active:scale-95 transition";
+        }
+
+        // ================= PROFILE & UTILS =================
+        function renderProfileGrid() {
+            const g = document.getElementById('profile-grid'); g.innerHTML = '';
+            Object.keys(users).forEach(k => {
+                const u = users[k];
+                const avatarUrl = getAvatarUrl(k); 
+                const d = document.createElement('div');
+                d.className = 'profile-card group flex flex-col items-center relative';
+                d.innerHTML = `
+                    <div class="w-48 h-48 rounded-2xl bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer shadow-2xl border-2 border-transparent hover:border-white transition relative" onclick="login('${k}')">
+                        <img src="${avatarUrl}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500">
+                    </div>
+                    <span class="mt-6 text-gray-300 text-2xl font-bold group-hover:text-white transition tracking-wide">${u.name}</span>
+                `;
+                g.appendChild(d);
+            });
+        }
+        
+        function login(uid) {
+            currentUser = users[uid]; currentUser.id = uid;
+            document.getElementById('nav-username').innerText = currentUser.name;
+            document.getElementById('nav-avatar').innerHTML = `<img src="${getAvatarUrl(uid)}" class="w-full h-full object-cover">`;
+            document.getElementById('profile-page').classList.add('hidden');
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            renderMyHistory(); showNotification(`ยินดีต้อนรับ ${currentUser.shortName}`, 'success');
+        }
+        function logout() { currentUser = null; document.getElementById('dashboard-page').classList.add('hidden'); document.getElementById('profile-page').classList.remove('hidden'); resetForm(); }
+        function showNotification(msg, type) { const area = document.getElementById('notification-area'); const d = document.createElement('div'); d.className = `${type==='success'?'bg-green-600':'bg-red-600'} text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 fade-in font-bold`; d.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}"></i> ${msg}`; area.appendChild(d); setTimeout(() => d.remove(), 3000); }
+
+        // ================= HELPER: SHIFT LOGIC 2026 FOR PAOPE =================
+        function getShiftAndType(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = dateObj.getMonth(); 
+            const d = dateObj.getDate();
+            const dayOfWeek = dateObj.getDay(); 
+
+            if (y < 2026) return { shift: '-', isHoliday: false, label: '-', weeklyShift: '-' };
+
+            if (y === 2026 && m === 0 && d >= 1 && d <= 4) return { shift: 'Free', isHoliday: false, label: 'Free', weeklyShift: 'Free' };
+            if (y === 2026 && m === 0 && d >= 5 && d <= 8) return { shift: 'C', isHoliday: false, label: 'C', weeklyShift: 'C' };
+            if (y === 2026 && m === 0 && d >= 9 && d <= 10) return { shift: '-', isHoliday: true, label: '', weeklyShift: '-' };
+
+            if (dayOfWeek === 5 || dayOfWeek === 6) {
+                const calculatedShift = calculateWeeklyShiftFromJan11(dateObj);
+                return { shift: '-', isHoliday: true, label: '', weeklyShift: calculatedShift };
+            }
+
+            const calculatedShift = calculateWeeklyShiftFromJan11(dateObj);
+            return { shift: calculatedShift, isHoliday: false, label: calculatedShift, weeklyShift: calculatedShift };
+        }
+
+        function calculateWeeklyShiftFromJan11(dateObj) {
+            const refDate = new Date(2026, 0, 11); 
+            const currentDate = new Date(dateObj);
+            currentDate.setHours(0,0,0,0);
+            refDate.setHours(0,0,0,0);
+            const diffTime = currentDate.getTime() - refDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            let weekIndex = Math.floor(diffDays / 7);
+            if (weekIndex < 0) return 'C'; 
+            const shifts = ['B', 'A', 'C'];
+            const shiftIndex = weekIndex % 3;
+            return shifts[shiftIndex];
+        }
+
+        // ================= MATRIX TABLE LOGIC =================
+        function openTeamDashboard() { document.getElementById('team-modal').classList.remove('hidden'); renderMatrixTable(); }
+        function closeTeamDashboard() { document.getElementById('team-modal').classList.add('hidden'); }
+
+        function renderMatrixTable() {
+            const monthInput = document.getElementById('team-month').value; 
+            if (!monthInput) return;
+
+            const [yearStr, monthStr] = monthInput.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            const thead = document.getElementById('matrix-header');
+            const tbody = document.getElementById('matrix-body');
+            
+            let headerHTML = `
+                <tr class="h-12">
+                    <th class="p-3 sticky-col-1 sticky-corner bg-[#202020] text-center w-32 border-b border-gray-700 z-50 shadow-md">เจ้าหน้าที่</th>
+                    <th class="p-3 sticky-col-2 sticky-header bg-[#202020] text-center w-32 border-b border-gray-700 z-50 shadow-md">งาน</th>
+                    <th class="p-3 text-center bg-[#252525] border-b border-gray-700 min-w-[60px] text-white">รวม</th>
+            `;
+            
+            for(let d=1; d<=daysInMonth; d++) {
+                const dayDate = new Date(year, month - 1, d);
+                const dayName = dayDate.toLocaleDateString('th-TH', { weekday: 'short' });
+                const { shift, isHoliday, label } = getShiftAndType(dayDate);
+                const bgClass = isHoliday ? 'bg-red-900/40 text-red-200' : '';
+                let shiftBadge = '';
+                if (label === 'Free') {
+                      shiftBadge = `<span class="block text-[8px] bg-blue-600 text-white rounded px-1 mt-0.5">Free</span>`;
+                } else if (!isHoliday) {
+                    let color = 'bg-gray-700';
+                    if(shift==='A') color='bg-green-600';
+                    if(shift==='B') color='bg-yellow-600 text-black';
+                    if(shift==='C') color='bg-purple-600';
+                    shiftBadge = `<span class="block text-[9px] ${color} text-white rounded-full w-4 h-4 flex items-center justify-center mx-auto mt-0.5 shadow-sm">${shift}</span>`;
+                } else {
+                    shiftBadge = `<span class="block text-[8px] opacity-30 mt-1">-</span>`;
+                }
+                headerHTML += `<th onclick="openDailyDetail(${d})" class="p-2 text-center border-b border-gray-700 min-w-[45px] text-[10px] ${bgClass} align-top pt-2 cursor-pointer hover:bg-white/10 hover:text-white transition group relative select-none">
+                    <div class="absolute top-0 right-0 p-0.5 opacity-0 group-hover:opacity-100 text-[8px] text-indigo-400"><i class="fas fa-search-plus"></i></div>
+                    <span class="opacity-70">${dayName}</span><br>
+                    <span class="text-sm font-bold group-hover:scale-110 inline-block transition">${d}</span>
+                    ${shiftBadge}
+                </th>`;
+            }
+            headerHTML += `</tr>`;
+            thead.innerHTML = headerHTML;
+
+            let bodyHTML = '';
+            let dailyTotals = new Array(daysInMonth + 1).fill(0); 
+
+            ORDERED_USER_KEYS.forEach((uid, userIndex) => {
+                if (!users[uid]) return;
+                const u = users[uid];
+                
+                TASK_CONFIG.forEach((task, taskIndex) => {
+                    const isLastTask = taskIndex === TASK_CONFIG.length - 1;
+                    const borderClass = isLastTask ? 'border-b-4 border-gray-600' : 'border-b border-gray-800';
+                    bodyHTML += `<tr class="${borderClass} hover:bg-white/5 transition">`;
+                    if(taskIndex === 0) {
+                        let userMonthTotal = 0;
+                        records.forEach(r => {
+                            if(r.userId === uid && r.workDate.startsWith(`${yearStr}-${monthStr}`) && (!r.status || r.status === 'work')) {
+                                userMonthTotal += (r.mlpr||0) + (r.mnpr||0) + (r.reconfirmed||0) + (r.txn||0) + (r.log||0) + (r.temp||0) + (r.qc||0) + (r.royal||0);
+                            }
+                        });
+                        const avatarUrl = getAvatarUrl(uid);
+                        bodyHTML += `
+                            <td rowspan="${TASK_CONFIG.length}" class="p-3 sticky-col-1 bg-[#1a1a1a] border-b-4 border-gray-600 align-middle text-center z-30 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">
+                                <div class="flex flex-col items-center gap-2">
+                                    <img src="${avatarUrl}" class="w-10 h-10 rounded-full bg-gray-700 shadow-md">
+                                    <span class="font-bold text-gray-200 text-sm">${u.shortName}</span>
+                                    <span class="text-[10px] text-indigo-300 bg-indigo-900/40 px-2 py-0.5 rounded-full font-mono whitespace-nowrap">Total: ${userMonthTotal.toLocaleString()}</span>
+                                </div>
+                            </td>
+                        `;
+                    }
+                    bodyHTML += `<td class="p-2 sticky-col-2 bg-[#1a1a1a] border-r border-gray-700 text-xs font-bold ${task.color} z-20 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">${task.label}</td>`;
+                    let taskTotal = 0;
+                    records.forEach(r => {
+                        if(r.userId === uid && r.workDate.startsWith(`${yearStr}-${monthStr}`) && (!r.status || r.status === 'work')) {
+                            taskTotal += (r[task.key] || 0);
+                        }
+                    });
+                    const totalVal = taskTotal > 0 ? taskTotal.toLocaleString() : '-';
+                    bodyHTML += `<td class="p-2 text-center bg-[#222] font-bold text-white border-r border-gray-700">${totalVal}</td>`;
+                    for(let d=1; d<=daysInMonth; d++) {
+                        const dayStr = d.toString().padStart(2, '0');
+                        const fullDate = `${yearStr}-${monthStr}-${dayStr}`;
+                        const dateObj = new Date(year, month - 1, d);
+                        const rec = records.find(r => r.userId === uid && r.workDate === fullDate);
+                        const { shift, isHoliday, label } = getShiftAndType(dateObj);
+                        if (rec) {
+                            if (rec.status && rec.status !== 'work') {
+                                if (taskIndex === 0) {
+                                    let statusLabel = '', statusBg = '';
+                                    switch(rec.status) {
+                                        case 'vacation': statusLabel = 'ลา<br>พัก<br>ร้อน'; statusBg = 'bg-yellow-900/20 text-yellow-500'; break;
+                                        case 'sick': statusLabel = 'ลา<br>ป่วย'; statusBg = 'bg-red-900/20 text-red-500'; break;
+                                        case 'personal': statusLabel = 'ลา<br>กิจ'; statusBg = 'bg-orange-900/20 text-orange-500'; break;
+                                        case 'off': statusLabel = 'หยุด'; statusBg = 'bg-gray-800/50 text-gray-500'; break;
+                                        case 'swap': statusLabel = 'สลับ<br>กะ'; statusBg = 'bg-blue-900/20 text-blue-500'; break;
+                                        default: statusLabel = rec.status; statusBg = 'bg-gray-800 text-gray-400';
+                                    }
+                                    bodyHTML += `<td rowspan="${TASK_CONFIG.length}" class="p-1 border-r border-gray-700/50 text-center text-[10px] leading-tight font-bold align-middle ${statusBg} hover:brightness-125 transition-all cursor-default select-none">${statusLabel}</td>`;
+                                }
+                            } else {
+                                const val = rec[task.key] || 0;
+                                let cellContent = val > 0 ? val : '-';
+                                let cellClass = val > 0 ? `font-bold font-mono ${task.color} ${task.bg}` : 'text-gray-500';
+                                if (val > 0) dailyTotals[d] += val;
+                                bodyHTML += `<td class="p-1 border-r border-gray-800/50 text-center text-xs ${cellClass}">${cellContent}</td>`;
+                            }
+                        } else {
+                            if (label === 'Free') {
+                                if (taskIndex === 0) bodyHTML += `<td rowspan="${TASK_CONFIG.length}" class="p-1 border-r border-gray-700/50 text-center text-[10px] font-bold align-middle text-indigo-300 bg-indigo-900/10 italic">วันวิ่ง<br>ฟรี</td>`;
+                            } else if (isHoliday) {
+                                if (taskIndex === 0) bodyHTML += `<td rowspan="${TASK_CONFIG.length}" class="p-1 border-r border-gray-700/50 text-center text-[10px] font-bold align-middle text-gray-600 bg-[#1f1f1f]">หยุด</td>`;
+                            } else {
+                                bodyHTML += `<td class="p-1 border-r border-gray-800/50 text-center text-xs text-gray-700">-</td>`;
+                            }
+                        }
+                    }
+                    bodyHTML += `</tr>`;
+                });
+            });
+
+            let footerHTML = `
+                <tr class="bg-[#222] font-bold border-t-4 border-gray-600 sticky bottom-0 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.5)]">
+                    <td class="p-3 sticky-col-1 bg-[#222] text-center z-50">Total</td>
+                    <td class="p-3 sticky-col-2 bg-[#222] text-center z-50 text-indigo-400">All Tasks</td>
+                    <td class="p-3 text-center bg-[#333] text-white">${dailyTotals.reduce((a, b) => a + b, 0).toLocaleString()}</td>
+            `;
+            for(let d=1; d<=daysInMonth; d++) {
+                const val = dailyTotals[d];
+                footerHTML += `<td class="p-2 text-center text-white ${val>0?'bg-indigo-900/20':''}">${val > 0 ? val.toLocaleString() : '-'}</td>`;
+            }
+            footerHTML += `</tr>`;
+
+            tbody.innerHTML = bodyHTML + footerHTML;
+        }
+
+        function openDailyDetail(day) {
+            const monthInput = document.getElementById('team-month').value;
+            if (!monthInput) return;
+            const [yearStr, monthStr] = monthInput.split('-');
+            const fullDate = `${yearStr}-${monthStr}-${day.toString().padStart(2, '0')}`;
+            const dateObj = new Date(parseInt(yearStr), parseInt(monthStr)-1, day);
+            const thDate = dateObj.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const { shift, isHoliday } = getShiftAndType(dateObj);
+            document.getElementById('daily-modal-title').innerHTML = `<i class="fas fa-calendar-day text-indigo-500 mr-2"></i> ${thDate}`;
+            document.getElementById('daily-modal-shift').innerHTML = `กะ: ${shift} ${isHoliday ? '(วันหยุด)' : ''}`;
+            const container = document.getElementById('daily-modal-content');
+            container.innerHTML = '';
+            let grandTotal = 0;
+            ORDERED_USER_KEYS.forEach(uid => {
+                const u = users[uid];
+                const rec = records.find(r => r.userId === uid && r.workDate === fullDate);
+                const avatarUrl = getAvatarUrl(uid);
+                let uTotal = 0;
+                const headerSection = `
+                    <div class="flex items-center gap-3 w-32 shrink-0">
+                        <div class="relative">
+                            <img src="${avatarUrl}" class="w-12 h-12 rounded-full bg-gray-700 border-2 border-gray-600 shadow-sm">
+                            ${rec ? '<div class="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-[#222]"></div>' : ''}
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-200 text-sm">${u.shortName}</div>
+                            <div class="text-[10px] text-gray-500 font-mono uppercase">${uid}</div>
+                        </div>
+                    </div>
+                `;
+                let contentSection = '';
+                if (rec) {
+                    if (!rec.status || rec.status === 'work') {
+                        uTotal = (rec.mlpr||0) + (rec.mnpr||0) + (rec.reconfirmed||0) + (rec.txn||0) + (rec.log||0) + (rec.temp||0) + (rec.qc||0) + (rec.royal||0);
+                        grandTotal += uTotal;
+                        let badges = [];
+                        const addBadge = (val, label, colorCls) => {
+                            if(val > 0) badges.push(`<div class="flex flex-col items-center bg-[#111] rounded p-1.5 border border-gray-700 min-w-[50px]"><span class="text-[9px] text-gray-500 font-bold mb-0.5">${label}</span><span class="${colorCls} font-bold font-mono text-sm">${val}</span></div>`);
+                        };
+                        addBadge(rec.mlpr, 'ML', 'text-rose-400');
+                        addBadge(rec.mnpr, 'MN', 'text-blue-400');
+                        addBadge(rec.reconfirmed, 'Re', 'text-emerald-400');
+                        addBadge(rec.txn, 'TXN', 'text-indigo-400');
+                        addBadge(rec.log, 'LOG', 'text-orange-400');
+                        addBadge(rec.temp, 'Q', 'text-pink-400');
+                        addBadge(rec.qc, 'QC', 'text-teal-400');
+                        addBadge(rec.royal, '👑', 'text-yellow-400');
+                        if (badges.length > 0) {
+                            contentSection = `<div class="flex flex-wrap gap-2 items-center flex-1">${badges.join('')}</div>`;
+                        } else {
+                            contentSection = `<div class="flex-1 text-center text-gray-600 text-sm italic border border-dashed border-gray-700 rounded p-2">Standby / ไม่มีเคส</div>`;
+                        }
+                    } else {
+                        let statusTxt = rec.status;
+                        let statusStyle = 'bg-gray-800 text-gray-400';
+                        switch(rec.status) {
+                            case 'vacation': statusTxt='🏖️ ลาพักร้อน'; statusStyle='bg-yellow-900/20 text-yellow-400 border border-yellow-900/50'; break;
+                            case 'sick': statusTxt='🤒 ลาป่วย'; statusStyle='bg-red-900/20 text-red-400 border border-red-900/50'; break;
+                            case 'personal': statusTxt='📝 ลากิจ'; statusStyle='bg-orange-900/20 text-orange-400 border border-orange-900/50'; break;
+                            case 'off': statusTxt='🏠 หยุด'; statusStyle='bg-gray-800 text-gray-500 border border-gray-700'; break;
+                            case 'swap': statusTxt='🔄 สลับกะ'; statusStyle='bg-blue-900/20 text-blue-400 border border-blue-900/50'; break;
+                        }
+                        contentSection = `<div class="flex-1 flex justify-center"><span class="${statusStyle} px-4 py-2 rounded-lg font-bold text-sm w-full text-center max-w-[200px]">${statusTxt}</span></div>`;
+                    }
+                } else {
+                    contentSection = `<div class="flex-1 flex justify-center"><span class="text-gray-700 italic text-xs">... ยังไม่บันทึกข้อมูล ...</span></div>`;
+                }
+                const totalSection = `
+                    <div class="flex flex-col items-end justify-center w-16 shrink-0 border-l border-gray-700 pl-3">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold">Total</span>
+                        <span class="text-xl font-bold ${uTotal > 0 ? 'text-white' : 'text-gray-600'}">${uTotal > 0 ? uTotal.toLocaleString() : '-'}</span>
+                    </div>
+                `;
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "bg-[#252525] p-3 rounded-xl flex items-center gap-2 border border-gray-700/50 hover:border-indigo-500/30 transition shadow-sm";
+                rowDiv.innerHTML = headerSection + contentSection + totalSection;
+                container.appendChild(rowDiv);
+            });
+            document.getElementById('daily-modal-total').innerText = grandTotal.toLocaleString();
+            document.getElementById('daily-modal').classList.remove('hidden');
+        }
+
+        function closeDailyModal() { document.getElementById('daily-modal').classList.add('hidden'); }
+
+        function openSummaryModal() { document.getElementById('summary-modal').classList.remove('hidden'); document.getElementById('summary-result-section').classList.add('hidden'); initDate(); renderSummaryUserList(); }
+        function closeSummaryModal() { document.getElementById('summary-modal').classList.add('hidden'); }
+        
+        function renderSummaryUserList() { 
+            const container = document.getElementById('summary-user-list'); 
+            container.innerHTML = ''; 
+            const dVal = document.getElementById('summary-date').value;
+            if (dVal) {
+                const [y, m, d] = dVal.split('-');
+                const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+                const { weeklyShift } = getShiftAndType(dateObj);
+                const shiftSelect = document.getElementById('summary-shift');
+                if (weeklyShift === 'A') shiftSelect.value = "เช้า (A)";
+                else if (weeklyShift === 'B') shiftSelect.value = "บ่าย (B)";
+                else if (weeklyShift === 'C') shiftSelect.value = "ดึก (C)";
+            }
+            ORDERED_USER_KEYS.forEach(uid => { 
+                const u = users[uid];
+                const avatarUrl = getAvatarUrl(uid);
+                const record = records.find(r => r.userId === uid && r.workDate === dVal);
+                let currentStatus = (record && record.status) ? record.status : 'work';
+                const row = document.createElement('div'); 
+                row.id = `sum-row-${uid}`; 
+                row.dataset.active = "true";
+                row.className = "flex items-center justify-between bg-[#252525] px-3 py-2 rounded border border-gray-700/50 transition-all duration-300"; 
+                row.innerHTML = `
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="toggleSumUser('${uid}')">
+                        <div id="btn-power-${uid}" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)] transition-all"><i class="fas fa-power-off"></i></div>
+                        <div id="info-${uid}" class="flex items-center gap-3 transition-all">
+                            <img src="${avatarUrl}" class="w-8 h-8 rounded-full bg-gray-700 object-cover">
+                            <span class="text-gray-200 font-bold select-none">${u.shortName}</span>
+                        </div>
+                    </div>
+                    <select id="sum-status-${uid}" class="bg-black text-white text-sm px-2 py-1 rounded border border-gray-600 outline-none focus:border-indigo-500 transition-opacity" onchange="generateSummaryText()">
+                        <option value="work" ${currentStatus === 'work' ? 'selected' : ''} class="text-green-400">✅ มาทำงาน</option>
+                        <option value="vacation" ${currentStatus === 'vacation' ? 'selected' : ''} class="text-yellow-400">🏖️ ลาพักร้อน</option>
+                        <option value="sick" ${currentStatus === 'sick' ? 'selected' : ''} class="text-red-400">🤒 ลาป่วย</option>
+                        <option value="personal" ${currentStatus === 'personal' ? 'selected' : ''} class="text-orange-400">📝 ลากิจ</option>
+                        <option value="off" ${currentStatus === 'off' ? 'selected' : ''} class="text-gray-400">🏠 หยุด</option>
+                        <option value="swap" ${currentStatus === 'swap' ? 'selected' : ''} class="text-blue-400">🔄 สลับกะ</option>
+                        <option value="absent" class="text-red-600">❌ ขาดงาน</option>
+                    </select>
+                `; 
+                container.appendChild(row); 
+            }); 
+        }
+
+        function toggleSumUser(uid) {
+            const row = document.getElementById(`sum-row-${uid}`); 
+            const btn = document.getElementById(`btn-power-${uid}`); 
+            const info = document.getElementById(`info-${uid}`); 
+            const select = document.getElementById(`sum-status-${uid}`);
+            const isActive = row.dataset.active === "true";
+            if (isActive) { 
+                row.dataset.active = "false"; 
+                btn.className = "w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-gray-600 transition-all"; 
+                info.className = "flex items-center gap-3 transition-all opacity-30 grayscale"; 
+                select.className = "bg-black text-white text-sm px-2 py-1 rounded border border-gray-800 outline-none opacity-20 pointer-events-none"; 
+                select.disabled = true; 
+                row.classList.remove('border-gray-700/50'); 
+                row.classList.add('border-transparent'); 
+            } else { 
+                row.dataset.active = "true"; 
+                btn.className = "w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)] transition-all"; 
+                info.className = "flex items-center gap-3 transition-all opacity-100 grayscale-0"; 
+                select.className = "bg-black text-white text-sm px-2 py-1 rounded border border-gray-600 outline-none focus:border-indigo-500 transition-opacity opacity-100 pointer-events-auto"; 
+                select.disabled = false; 
+                row.classList.add('border-gray-700/50'); 
+                row.classList.remove('border-transparent'); 
+            }
+        }
+
+        function generateSummaryText() { 
+            const dVal = document.getElementById('summary-date').value; 
+            const shift = document.getElementById('summary-shift').value; 
+            const resultSection = document.getElementById('summary-result-section');
+            if(!dVal) { showNotification('กรุณาเลือกวันที่ก่อน', 'error'); return; }
+            const [y, m, d] = dVal.split('-'); 
+            let txt = `สรุปรายงานประจำวันที่ ${d}/${m}/${parseInt(y)+543}\nกะ : ${shift}\n\n`; 
+            ORDERED_USER_KEYS.forEach(uid => { 
+                const row = document.getElementById(`sum-row-${uid}`); 
+                if (row.dataset.active === "false") return;
+                const status = document.getElementById(`sum-status-${uid}`).value; 
+                const uName = users[uid].shortName;
+                if (status === 'work') { 
+                    const rs = records.filter(r => r.userId === uid && r.workDate === dVal); 
+                    if (rs.length > 0) {
+                        let s = { mlpr:0, mnpr:0, re:0, txn:0, log:0, temp:0, qc:0, royal:0 }; 
+                        rs.forEach(r => { 
+                            if (!r.status || r.status === 'work') {
+                                s.mlpr += (r.mlpr||0); s.mnpr += (r.mnpr||0); s.re += (r.reconfirmed||0); 
+                                s.txn += (r.txn||0); s.log += (r.log||0); s.temp += (r.temp||0); 
+                                s.qc += (r.qc||0); s.royal += (r.royal||0); 
+                            }
+                        }); 
+                        let tags = []; 
+                        if(s.mlpr > 0) tags.push(`MLPR: ${s.mlpr}`); 
+                        if(s.mnpr > 0) tags.push(`MNPR: ${s.mnpr}`); 
+                        if(s.re > 0) tags.push(`Re-Con: ${s.re}`); 
+                        if(s.txn > 0) tags.push(`TXN: ${s.txn}`); 
+                        if(s.log > 0) tags.push(`LOG: ${s.log}`); 
+                        if(s.temp > 0) tags.push(`น้องถาม: ${s.temp}`); 
+                        if(s.qc > 0) tags.push(`QC: ${s.qc}`); 
+                        if(s.royal > 0) tags.push(`ขบวนเสด็จ: ${s.royal}`);
+                        const details = tags.length ? tags.join(' / ') : 'Standby / ปกติ'; 
+                        txt += `${uName} : ${details}\n`; 
+                    } else { 
+                        txt += `${uName} : (รอลงข้อมูล)\n`; 
+                    }
+                } else { 
+                    let statusText = ''; 
+                    switch(status) { 
+                        case 'vacation': statusText = 'ลาพักร้อน'; break; 
+                        case 'sick': statusText = 'ลาป่วย'; break; 
+                        case 'personal': statusText = 'ลากิจ'; break; 
+                        case 'off': statusText = 'หยุด'; break; 
+                        case 'swap': statusText = 'สลับกะ'; break; 
+                        case 'absent': statusText = 'ขาดงาน'; break; 
+                        default: statusText = '-'; 
+                    }
+                    txt += `${uName} : ${statusText}\n`; 
+                } 
+            }); 
+            document.getElementById('summary-text').value = txt; 
+            resultSection.classList.remove('hidden'); 
+            setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+        }
+
+        function copySummaryAndClose() { 
+            const el = document.getElementById('summary-text'); 
+            el.select(); el.setSelectionRange(0,99999); 
+            navigator.clipboard.writeText(el.value); 
+            showNotification('คัดลอกสำเร็จ', 'success'); 
+            setTimeout(closeSummaryModal, 300); 
+        }
+    </script>
+</body>
+</html>
