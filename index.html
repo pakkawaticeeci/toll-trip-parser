@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trip Extractor Suite | By หน่องไอซ์</title>
+<style>
+  :root {
+    --bg-dark: #0f172a;
+    --bg-nav: #1e293b;
+    --border-dark: rgba(255, 255, 255, 0.08);
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #eef2f6;
+    font: 14px/1.5 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    color: var(--text-light);
+    overflow: hidden;
+  }
+  .top {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%);
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border-dark);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.18);
+    z-index: 10;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  }
+  .brand-text {
+    font-weight: 800;
+    font-size: 16.5px;
+    letter-spacing: 0.4px;
+    color: #fff;
+  }
+  .brand-text small {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.9px;
+    font-weight: 600;
+    color: #6ee7b7;
+    margin-top: 1px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(10px);
+    padding: 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+  }
+  .tabs button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    border-radius: 999px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tabs button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .tabs button[aria-selected=true] {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+  }
+  .tabs button:focus-visible {
+    outline: 2px solid #a7f3d0;
+    outline-offset: 2px;
+  }
+  .hint {
+    margin-left: auto;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .hint::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+    display: inline-block;
+  }
+  iframe {
+    border: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    background: transparent;
+  }
+  iframe[hidden] { display: none; }
+  @media(max-width: 768px) {
+    .top { padding: 12px 16px; gap: 12px; }
+    .hint { display: none; }
+    .tabs { width: 100%; border-radius: 20px; }
+    .tabs button { flex: 1; justify-content: center; font-size: 12px; padding: 9px 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <div class="brand-icon">↯</div>
+      <div class="brand-text">
+        TRIP EXTRACTOR SUITE
+        <small>BY หน่องไอซ์ · ZERO API · OFFLINE</small>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="เลือกโปรแกรม">
+      <button id="tab0" role="tab" aria-selected="true" aria-controls="frame0">
+        <span>1. CCTV / ปรับราคา / รถหาย · 12 ช่อง</span>
+      </button>
+      <button id="tab1" role="tab" aria-selected="false" aria-controls="frame1">
+        <span>2. ลงอนุมัติผิด/แจ้งหน้างาน · 13 ช่อง</span>
+      </button>
+    </div>
+    <div class="hint">สลับแท็บได้โดยไม่ล้างข้อมูล</div>
+  </div>
+
+  <!-- FRAME 0: 12 COLUMNS -->
+  <iframe id="frame0" title="CCTV / ปรับราคา / รถหาย" allow="clipboard-write" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;th&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;โปรแกรมแกะข้อมูลรายการผ่านทาง (CCTV / ปรับราคา)&lt;/title&gt;
+&lt;style&gt;
+:root{
+  --navy:#0f172a;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;
+  --indigo:#4f46e5;--indigo-light:#eef2ff;--indigo-border:#c7d2fe;
+  --green:#059669;--green-dark:#047857;--green-light:#ecfdf5;--green-border:#a7f3d0;
+  --amber-light:#fffbeb;--amber-border:#fde68a;
+  --paper:#ffffff;--bg:#eef2f6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font:14px/1.55 &#x27;Sarabun&#x27;,&#x27;Leelawadee UI&#x27;,Tahoma,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg, #eef2f6 0%, #e2e8f0 100%);
+  min-height:100vh;
+}
+button,input,textarea,select{font:inherit}
+button{
+  cursor:pointer;border:1px solid #cbd5e1;border-radius:999px;padding:8px 16px;
+  background:#fff;color:var(--ink);font-weight:700;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:0 1px 3px rgba(15,23,42,0.04);
+}
+button:hover:not(:disabled){background:#f8fafc;border-color:#94a3b8;transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,0.08)}
+button:active:not(:disabled){transform:translateY(0)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}
+button:disabled{opacity:0.45;cursor:not-allowed;box-shadow:none}
+
+/* Sub-Header Toolbar */
+.toolbar{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(226,232,240,0.8);position:sticky;top:0;z-index:5;
+  box-shadow:0 4px 20px rgba(15,23,42,0.04);
+}
+.toolbar-inner{
+  max-width:1540px;margin:auto;padding:12px 28px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.tool-title{display:flex;align-items:center;gap:12px}
+.tool-badge{
+  background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#fff;border:none;
+  font-size:11.5px;font-weight:800;padding:4px 12px;border-radius:999px;
+  box-shadow:0 2px 8px rgba(79, 70, 229, 0.28);
+}
+.tool-title h1{font-size:16.5px;margin:0;color:var(--navy);font-weight:800}
+.head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.head-actions .danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.head-actions .danger:hover{background:#ffe4e6;border-color:#fda4af}
+.toggle{
+  display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+  background:#f8fafc;border:1px solid #cbd5e1;padding:7px 14px;border-radius:999px;cursor:pointer;
+  transition:all 0.2s;
+}
+.toggle:hover{background:#fff;border-color:#94a3b8}
+.toggle input{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
+
+main{max-width:1540px;margin:22px auto;padding:0 28px 48px;display:grid;gap:22px}
+.work{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,2.2fr);gap:22px}
+.panel{
+  background:var(--paper);border:1px solid rgba(255,255,255,0.9);border-radius:24px;
+  padding:24px;box-shadow:0 10px 30px rgba(15,23,42,0.05), 0 1px 3px rgba(15,23,42,0.03);min-width:0;
+}
+.paste{border:2px dashed #a5b4fc;background:linear-gradient(145deg, #ffffff 0%, #f5f7ff 100%);display:flex;flex-direction:column}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.section-head h2{font-size:16.5px;margin:0;color:var(--navy);font-weight:800;display:flex;align-items:center;gap:10px}
+.step-num{
+  background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#fff;width:26px;height:26px;border-radius:50%;
+  display:inline-grid;place-items:center;font-size:12.5px;font-weight:800;
+  box-shadow:0 3px 8px rgba(79, 70, 229, 0.28);
+}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.paste textarea{
+  width:100%;min-height:245px;flex:1;resize:vertical;padding:14px 16px;
+  border:1.5px solid #cbd5e1;border-radius:16px;background:#fff;
+  font:12.5px/1.6 Consolas,&#x27;Leelawadee UI&#x27;,Tahoma,monospace;color:var(--ink);
+  box-shadow:inset 0 2px 5px rgba(15,23,42,0.03);transition:all 0.2s;
+}
+.paste textarea:focus{border-color:#4f46e5;box-shadow:0 0 0 4px rgba(99,102,241,0.1)}
+.minor{font-size:12px;padding:6px 14px;color:var(--indigo);background:var(--indigo-light);border-color:var(--indigo-border);border-radius:999px}
+.minor:hover:not(:disabled){background:#e0e7ff}
+.meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--indigo-light);color:#3730a3;border:1px solid var(--indigo-border);border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:700;overflow-wrap:anywhere}
+.status{font-size:12px;font-weight:800;padding:5px 14px;border-radius:999px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.status.ok{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.status.warn{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+
+/* Mode Selector */
+.modebar{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  margin:0 0 18px;padding:6px;background:#f1f5f9;border-radius:999px;border:1px solid #e2e8f0;
+}
+.modebar button{
+  font-size:12.5px;padding:10px 12px;border:none;background:transparent;color:#475569;border-radius:999px;box-shadow:none;
+}
+.modebar button:hover{color:var(--navy);background:rgba(255,255,255,0.7);transform:none}
+.modebar button[aria-pressed=&quot;true&quot;]{
+  background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#fff;
+  box-shadow:0 4px 12px rgba(79,70,229,0.3);
+}
+
+/* Fields Grid */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.field{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:12px 14px;
+  min-width:0;transition:all 0.2s ease;
+}
+.field:hover{border-color:#cbd5e1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,0.03)}
+.field.key{background:linear-gradient(145deg, #eef2ff 0%, #e0e7ff 100%);border-color:#c7d2fe}
+.field.green{background:linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);border-color:#a7f3d0}
+.field.amber{background:linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);border-color:#fde68a}
+.field.blank{background:#f1f5f9;opacity:0.7}
+.field label{font-size:12px;font-weight:800;display:block;min-width:0;color:#334155}
+.labelrow{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-bottom:8px}
+.mini{
+  font-size:11px;padding:3px 9px;border:1px solid rgba(79,70,229,0.2);
+  background:rgba(255,255,255,0.85);color:var(--indigo);border-radius:999px;box-shadow:none;
+}
+.mini:hover{background:#fff;border-color:var(--indigo)}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid #cbd5e1;border-radius:12px;background:#fff;
+  padding:8px 12px;min-width:0;color:var(--navy);font-size:13px;transition:all 0.2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
+.field textarea{resize:vertical;line-height:1.45;min-height:54px}
+.field input[readonly]{background:#e2e8f0;color:#64748b;border-color:#cbd5e1}
+.field.key input,.field.green input,.field.key textarea{font-weight:700}
+.field select{border-color:#6ee7b7;font-weight:700;cursor:pointer}
+.quick{display:flex;gap:5px;margin-top:8px}
+.quick button{
+  flex:1;font-size:11px;padding:4px 6px;background:#d1fae5;color:#065f46;
+  border:1px solid #a7f3d0;border-radius:999px;box-shadow:none;
+}
+.quick button:hover{background:#a7f3d0}
+.refhint{font-size:11px;color:#4f46e5;font-weight:700;display:block;margin-top:6px}
+
+.info{margin-top:14px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.notice{
+  display:none;background:#fffbeb;border:1px solid #fcd34d;border-left:5px solid #f59e0b;
+  color:#92400e;padding:12px 16px;border-radius:16px;margin:14px 0 0;font-size:12.5px;font-weight:600;
+}
+.notice.show{display:block}
+
+/* Main Copy CTA */
+.copy-main{
+  background:linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color:#fff;border:none;border-radius:999px;padding:17px 28px;
+  font-size:17.5px;font-weight:800;letter-spacing:0.3px;
+  box-shadow:0 10px 25px rgba(5,150,105,0.32);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.copy-main:hover:not(:disabled){
+  background:linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow:0 12px 30px rgba(5,150,105,0.42);transform:translateY(-2px);
+}
+
+/* Table */
+.tablewrap{overflow:auto;border-radius:18px;border:1px solid #cbd5e1;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.02)}
+table{border-collapse:collapse;width:100%;min-width:2150px;text-align:left}
+th{
+  background:#1e293b;color:#f8fafc;font-size:12px;font-weight:700;
+  padding:12px 14px;border-right:1px solid #334155;white-space:nowrap;
+}
+td{padding:7px;border-right:1px solid #e2e8f0;background:#fff}
+td input,td select,td textarea{
+  border:1px solid transparent;background:transparent;border-radius:10px;
+  padding:8px 10px;width:100%;min-width:85px;color:var(--ink);font-size:13px;
+}
+td textarea{resize:vertical;line-height:1.45;min-height:48px}
+td input:hover,td input:focus,td select:hover,td select:focus,td textarea:hover,td textarea:focus{border-color:#94a3b8;background:#f8fafc}
+td input[readonly]{background:#f1f5f9;color:#64748b}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;background:#f8fafc;border-radius:16px;margin-top:10px}
+
+/* History */
+.history-list{max-height:300px;overflow:auto;padding-right:4px}
+.history-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;border:1px solid #e2e8f0;border-radius:18px;margin-top:10px;background:#f8fafc;
+  transition:all 0.2s;
+}
+.history-row:hover{background:#fff;border-color:#cbd5e1;box-shadow:0 4px 12px rgba(15,23,42,0.04)}
+.history-row .desc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px}
+.history-row .desc strong{color:var(--indigo);font-size:13.5px}
+.history-row .desc span:last-child{white-space:pre-line}
+.history-row .actions{display:flex;gap:8px}
+.history-row button{font-size:12px;padding:7px 14px;border-radius:999px}
+.green-btn{background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none}
+.green-btn:hover{background:linear-gradient(135deg, #059669 0%, #047857 100%)}
+.danger-text{color:#be123c;background:#fff1f2;border-color:#fecdd3}
+.danger-text:hover:not(:disabled){background:#ffe4e6}
+
+.toast{
+  position:fixed;right:24px;bottom:24px;z-index:99;max-width:calc(100vw - 48px);
+  background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);display:none;border:1px solid rgba(16,185,129,0.5);
+}
+.toast.show{display:block;animation:slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)}
+.toast.error{background:rgba(136,19,55,0.95);border-color:rgba(251,113,133,0.5)}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}
+kbd{font:11.5px Consolas,monospace;border:1px solid #cbd5e1;border-radius:6px;padding:2px 6px;background:#fff;color:#334155;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+.small-footer{font-size:11.5px;color:var(--muted);text-align:center;padding-top:6px}
+
+@media(max-width:1050px){.work{grid-template-columns:1fr}.paste textarea{min-height:160px}
+@media(max-width:650px){
+  main{padding:0 14px 28px;margin-top:14px}
+  .toolbar-inner{padding:10px 14px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modebar{grid-template-columns:1fr;border-radius:20px}
+  .panel{padding:16px;border-radius:20px}
+  .copy-main{font-size:15px}
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;toolbar&quot;&gt;
+  &lt;div class=&quot;toolbar-inner&quot;&gt;
+    &lt;div class=&quot;tool-title&quot;&gt;
+      &lt;span class=&quot;tool-badge&quot;&gt;12 คอลัมน์&lt;/span&gt;
+      &lt;h1&gt;แกะข้อมูลรายการผ่านทาง (CCTV / ปรับราคา / รถหาย)&lt;/h1&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;head-actions&quot;&gt;
+      &lt;label class=&quot;toggle&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;auto&quot; checked&gt; คัดลอกอัตโนมัติทันทีที่วาง&lt;/label&gt;
+      &lt;button id=&quot;sample&quot;&gt;ทดสอบข้อความตัวอย่าง&lt;/button&gt;
+      &lt;button id=&quot;clear&quot; class=&quot;danger&quot;&gt;ล้างหน้าจอ&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;main&gt;
+  &lt;div class=&quot;work&quot;&gt;
+    &lt;section class=&quot;panel paste&quot;&gt;
+      &lt;div class=&quot;section-head&quot;&gt;
+        &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;1&lt;/span&gt; กล่องรับข้อความต้นฉบับ&lt;/h2&gt;
+        &lt;button class=&quot;minor&quot; id=&quot;clearRaw&quot;&gt;ล้างกล่อง&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;p class=&quot;sub&quot;&gt;ลากคลุมข้อมูลจากหมวดอักษรถึงวินาทีเริ่มต้น แล้วกด &lt;kbd&gt;Ctrl+V&lt;/kbd&gt; บนหน้านี้ได้เลย&lt;/p&gt;
+      &lt;textarea id=&quot;raw&quot; placeholder=&quot;วางข้อความจากระบบรายการผ่านทางที่นี่…&quot; spellcheck=&quot;false&quot;&gt;&lt;/textarea&gt;
+      &lt;div class=&quot;meta&quot; id=&quot;meta&quot;&gt;&lt;/div&gt;
+      &lt;p class=&quot;sub&quot; style=&quot;margin:10px 0 0;font-size:11.5px&quot;&gt;แปลงด่านอัตโนมัติ: ทับช้าง 1/2 → &lt;strong&gt;TC1/TC2&lt;/strong&gt; · ธัญบุรี 1/2 → &lt;strong&gt;TY1/TY2&lt;/strong&gt;&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;panel&quot;&gt;
+      &lt;div class=&quot;section-head&quot;&gt;
+        &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;2&lt;/span&gt; ข้อมูลที่จำแนกได้ (12 คอลัมน์)&lt;/h2&gt;
+        &lt;span class=&quot;status&quot; id=&quot;status&quot;&gt;รอวางข้อความ&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;p class=&quot;sub&quot;&gt;ช่อง 11 เว้นว่างเสมอ · ช่อง 12 เลือกชื่อผู้ปฏิบัติงาน (ระบบจำชื่อไว้ให้ตลอดรอบนี้)&lt;/p&gt;
+      &lt;div class=&quot;modebar&quot; aria-label=&quot;เลือกโหมดการทำงาน&quot;&gt;
+        &lt;button id=&quot;mode1&quot; type=&quot;button&quot;&gt;1. สร้างรถจี้ท้ายจาก CCTV&lt;/button&gt;
+        &lt;button id=&quot;mode2&quot; type=&quot;button&quot;&gt;2. ปรับราคารถลากจูง&lt;/button&gt;
+        &lt;button id=&quot;mode3&quot; type=&quot;button&quot;&gt;3. สร้างรถหายแบบสร้างเท่านั้น&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;fields&quot; class=&quot;grid&quot;&gt;&lt;/div&gt;
+      &lt;div id=&quot;warning&quot; class=&quot;notice&quot; role=&quot;status&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;info&quot; id=&quot;summary&quot;&gt;พร้อมรับข้อความใหม่&lt;/div&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+
+  &lt;button class=&quot;copy-main&quot; id=&quot;copyRow&quot;&gt;
+    &lt;span&gt;📋 คัดลอกข้อมูลทั้ง 12 ช่อง (นำไปวางใน Excel ได้เลย)&lt;/span&gt;
+  &lt;/button&gt;
+
+  &lt;section class=&quot;panel&quot;&gt;
+    &lt;div class=&quot;section-head&quot;&gt;
+      &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;3&lt;/span&gt; ตารางพรีวิว 12 คอลัมน์ &lt;span class=&quot;status&quot; id=&quot;count&quot;&gt;ว่าง&lt;/span&gt;&lt;/h2&gt;
+      &lt;button class=&quot;minor&quot; id=&quot;copyHeader&quot;&gt;คัดลอกพร้อมหัวตาราง&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;tablewrap&quot;&gt;
+      &lt;table&gt;&lt;thead&gt;&lt;tr id=&quot;headers&quot;&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody id=&quot;preview&quot;&gt;&lt;/tbody&gt;&lt;/table&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;empty&quot; id=&quot;empty&quot;&gt;วางข้อความเพื่อแสดงข้อมูลในตารางพรีวิว&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;panel&quot;&gt;
+    &lt;div class=&quot;section-head&quot;&gt;
+      &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;4&lt;/span&gt; ประวัติรายการในรอบนี้ &lt;span id=&quot;histCount&quot; class=&quot;status&quot;&gt;0&lt;/span&gt;&lt;/h2&gt;
+      &lt;div style=&quot;display:flex;gap:6px&quot;&gt;
+        &lt;button class=&quot;minor&quot; id=&quot;copyAll&quot;&gt;คัดลอกประวัติทั้งหมด&lt;/button&gt;
+        &lt;button class=&quot;minor danger-text&quot; id=&quot;clearAll&quot;&gt;ล้างประวัติ&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;p class=&quot;sub&quot;&gt;สูงสุด 50 รายการ · เรียงจากใหม่ไปเก่า · คัดลอกทั้งหมดตามลำดับเวลาที่บันทึก · ประวัติหายเมื่อปิดหรือรีเฟรชหน้า&lt;/p&gt;
+    &lt;div id=&quot;history&quot; class=&quot;history-list&quot;&gt;&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;div class=&quot;small-footer&quot;&gt;ประมวลผลในเครื่องทั้งหมด · ไม่ส่งข้อมูลไปยังภายนอก · โปรแกรมจัดรูปแบบข้อมูลเท่านั้น ไม่สร้าง TXN หรือยิง Postman จริง&lt;/div&gt;
+&lt;/main&gt;
+
+&lt;div id=&quot;toast&quot; class=&quot;toast&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+&#x27;use strict&#x27;;
+const HEADERS=[&#x27;หมวดทะเบียน&#x27;,&#x27;ตรวจสอบรายการผ่านทาง&#x27;,&#x27;ด่าน&#x27;,&#x27;วัน เวลา&#x27;,&#x27;เดือน&#x27;,&#x27;00 0000 -&#x27;,&#x27;ตรวจสอบการผ่านทางที่ผิดกฎหมาย&#x27;,&#x27;Ref Trip Id&#x27;,&#x27;สร้างรถจี้ท้ายจาก CCTV&#x27;,&#x27;ยิงpostmanเท่านั้น&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;ชื่อผู้ปฏิบัติงาน&#x27;];
+const MONTHS=[&#x27;มกราคม&#x27;,&#x27;กุมภาพันธ์&#x27;,&#x27;มีนาคม&#x27;,&#x27;เมษายน&#x27;,&#x27;พฤษภาคม&#x27;,&#x27;มิถุนายน&#x27;,&#x27;กรกฎาคม&#x27;,&#x27;สิงหาคม&#x27;,&#x27;กันยายน&#x27;,&#x27;ตุลาคม&#x27;,&#x27;พฤศจิกายน&#x27;,&#x27;ธันวาคม&#x27;];
+const SAMPLE = `หมวดอักษร
+กธ
+เลขทะเบียน
+3407
+จังหวัด
+กำแพงเพชร
+Class
+4 ล้อ
+สายทาง
+ทางหลวงพิเศษหมายเลข 9
+ด่าน
+ทับช้าง 2
+ช่องทาง
+1
+
+Ref Trip Id
+583102026110300000846170728611A
+วันที่ผ่านทาง
+03/11/2026
+ชั่วโมง-นาทีผ่านทาง
+00:00
+วินาทีเริ่มต้น
+08
+เหตุผลในการสร้างรายการผ่านทางใหม่
+อนุมัติจาก CCTV`;
+const MODE_PRESETS = {
+  1: { name: &#x27;โหมด 1: สร้างรถจี้ท้ายจาก CCTV&#x27;, col2: &#x27;ตรวจสอบรายการผ่านทาง&#x27;, col6: &#x27;00 0000 -&#x27;, col7: &#x27;ตรวจสอบการผ่านทางที่ผิดกฎหมาย&#x27;, overrideCol8: null, col9: &#x27;สร้างรถจี้ท้ายจาก CCTV&#x27;, col10: &#x27;ยิงpostmanเท่านั้น&#x27; },
+  2: { name: &#x27;โหมด 2: ปรับราคารถลากจูง&#x27;, col2: &#x27;ตรวจสอบรายการผ่านทาง&#x27;, col6: &#x27;---&#x27;, col7: &#x27;ตรวจสอบรายการผ่านทาง&#x27;, overrideCol8: null, col9: &#x27;ปรับราคา&#x27;, col10: &#x27;สร้างTXNเท่านั้น&#x27; },
+  3: { name: &#x27;โหมด 3: สร้างรถหายแบบสร้างเท่านั้น&#x27;, col2: &#x27;ตรวจสอบรายการผ่านทาง&#x27;, col6: &#x27;---&#x27;, col7: &#x27;-&#x27;, overrideCol8: &#x27;---&#x27;, col9: &#x27;สร้างจากกล้อง CCTV&#x27;, col10: &#x27;สร้างTXNเท่านั้น&#x27; }
+};
+const KNOWN_LABELS = [&#x27;หมวดอักษร&#x27;,&#x27;เลขทะเบียน&#x27;,&#x27;จังหวัด&#x27;,&#x27;Class&#x27;,&#x27;สายทาง&#x27;,&#x27;ด่าน&#x27;,&#x27;ช่องทาง&#x27;,&#x27;Ref Trip Id&#x27;,&#x27;วันที่ผ่านทาง&#x27;,&#x27;ชั่วโมง-นาทีผ่านทาง&#x27;,&#x27;วินาทีเริ่มต้น&#x27;,&#x27;เหตุผลในการสร้างรายการผ่านทางใหม่&#x27;];
+const MAX_REF_LENGTH=31;
+let currentMode=1,lastRef=&quot;&quot;;
+
+function sanitizeRefTripId(rawRef) {
+  if (!rawRef) return &#x27;&#x27;;
+  const trimmed = String(rawRef).trim();
+  if (trimmed === &#x27;---&#x27;) return &#x27;---&#x27;;
+  const cleanFull = trimmed.toUpperCase().replace(/[^0-9A-Z_]/g, &#x27;&#x27;);
+  let basePart = cleanFull, suffixPart = &#x27;&#x27;;
+  const suffixMatch = cleanFull.match(/^(.+?)(_[0-9]*)$/);
+  if (suffixMatch) {
+    basePart = suffixMatch[1].replace(/_/g, &#x27;&#x27;);
+    suffixPart = suffixMatch[2].slice(0, 3);
+  } else {
+    basePart = cleanFull.replace(/_/g, &#x27;&#x27;);
+  }
+  if (basePart.length &gt; MAX_REF_LENGTH) {
+    const lastChar = basePart.slice(-1);
+    if (/[A-Z]/.test(lastChar)) {
+      const digitsOnly = basePart.slice(0, -1).replace(/[^0-9]/g, &#x27;&#x27;);
+      basePart = digitsOnly.slice(0, MAX_REF_LENGTH - 1) + lastChar;
+    } else {
+      basePart = basePart.slice(0, MAX_REF_LENGTH);
+    }
+  }
+  return basePart + suffixPart;
+}
+
+function clean(s){return String(s??&#x27;&#x27;).replace(/[\t\r\n]+/g,&#x27; &#x27;).replace(/\s+/g,&#x27; &#x27;).trim();}
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,&#x27;\\$&amp;&#x27;);}
+function monthFrom(s){const m=String(s).match(/(?:^|\s)\d{1,2}\/(\d{1,2})\/\d{4}(?=\s|$)/);return m?MONTHS[Number(m[1])-1]||&#x27;&#x27;:&#x27;&#x27;;}
+function dateTime(s){const m=String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})(?:\.\d+)?/);if(!m)return &#x27;&#x27;;const [,d,mo,y,h,mi,se]=m;const yy=Number(y)&gt;2400?Number(y)-543:Number(y);const check=new Date(Date.UTC(yy,Number(mo)-1,Number(d)));if(check.getUTCMonth()!==Number(mo)-1||check.getUTCDate()!==Number(d)||+h&gt;23||+mi&gt;59||+se&gt;59)return &#x27;&#x27;;return `${d.padStart(2,&#x27;0&#x27;)}/${mo.padStart(2,&#x27;0&#x27;)}/${y} ${h.padStart(2,&#x27;0&#x27;)}:${mi}:${se}`;}
+function plazaCode(s){const a=clean(s).replace(/\s+/g,&#x27;&#x27;);for(const [key,val] of [[&#x27;ทับช้าง1&#x27;,&#x27;TC1&#x27;],[&#x27;ทับช้าง2&#x27;,&#x27;TC2&#x27;],[&#x27;ธัญบุรี1&#x27;,&#x27;TY1&#x27;],[&#x27;ธัญบุรี2&#x27;,&#x27;TY2&#x27;]])if(a.includes(key))return val;const m=a.match(/^(TC[12]|TY[12])$/i);return m?m[1].toUpperCase():clean(s);}
+function blankRow(name=&#x27;&#x27;){const p=MODE_PRESETS[currentMode];return [&#x27;&#x27;,p.col2,&#x27;&#x27;,&#x27;&#x27;,&#x27;&#x27;,p.col6,p.col7,p.overrideCol8??&#x27;&#x27;,p.col9,p.col10,&#x27;&#x27;,clean(name)];}
+
+function parse(rawText,name=&#x27;&#x27;){
+  const text = rawText.replace(/\r\n/g, &#x27;\n&#x27;).replace(/\r/g, &#x27;\n&#x27;);
+  const lines = text.split(&#x27;\n&#x27;).map(l =&gt; l.trim()).filter(l =&gt; l.length &gt; 0);
+  function getValueByLabel(labelVariants) {
+    for (let i = 0; i &lt; lines.length; i++) {
+      const line = lines[i];
+      for (const label of labelVariants) {
+        if (line.toLowerCase() === label.toLowerCase()) {
+          const nextLine = lines[i + 1] || &#x27;&#x27;;
+          if (!KNOWN_LABELS.some(kl =&gt; kl.toLowerCase() === nextLine.toLowerCase())) return nextLine.trim();
+        }
+        const regex = new RegExp(`^${esc(label)}[\\s:\\t]+(.+)$`, &#x27;i&#x27;);
+        const match = line.match(regex);
+        if (match &amp;&amp; match[1]) return match[1].trim();
+      }
+    }
+    return &#x27;&#x27;;
+  }
+  let platePrefix = getValueByLabel([&#x27;หมวดอักษร&#x27;]);
+  let plateNumber = getValueByLabel([&#x27;เลขทะเบียน&#x27;]);
+  let province = getValueByLabel([&#x27;จังหวัด&#x27;]);
+  let vehicleClass = getValueByLabel([&#x27;Class&#x27;, &#x27;ประเภท&#x27;, &#x27;ประเภทรถ&#x27;]);
+  let highway = getValueByLabel([&#x27;สายทาง&#x27;]);
+  let plaza = getValueByLabel([&#x27;ด่าน&#x27;, &#x27;ด่านฯ&#x27;]);
+  let lane = getValueByLabel([&#x27;ช่องทาง&#x27;, &#x27;ช่องจราจร&#x27;]);
+  let refTripId = getValueByLabel([&#x27;Ref Trip Id&#x27;, &#x27;RefTripId&#x27;, &#x27;Ref Trip ID&#x27;]);
+  let dateStr = getValueByLabel([&#x27;วันที่ผ่านทาง&#x27;, &#x27;วันที่&#x27;]);
+  let timeHm = getValueByLabel([&#x27;ชั่วโมง-นาทีผ่านทาง&#x27;, &#x27;เวลา&#x27;]);
+  let seconds = getValueByLabel([&#x27;วินาทีเริ่มต้น&#x27;, &#x27;วินาที&#x27;]);
+  let reason = getValueByLabel([&#x27;เหตุผลในการสร้างรายการผ่านทางใหม่&#x27;, &#x27;เหตุผล&#x27;]);
+
+  if (!refTripId) { const refMatch = text.match(/([0-9]{25,30}[A-Z](?:_[0-9]+)?)/i); if (refMatch) refTripId = refMatch[1]; }
+  if (!dateStr) { const dateMatch = text.match(/([0-3][0-9]\/[0-1][0-9]\/20[2-3][0-9])/); if (dateMatch) dateStr = dateMatch[1]; }
+  if (!timeHm) { const timeMatch = text.match(/\b([0-2][0-9]:[0-5][0-9])\b/); if (timeMatch) timeHm = timeMatch[1]; }
+  if (!plaza) { const plazaMatch = text.match(/(ทับช้าง\s*[12]|ธัญบุรี\s*[12]|TC[12]|TY[12])/i); if (plazaMatch) plaza = plazaMatch[1]; }
+
+  const row=blankRow(name);
+  const ref=sanitizeRefTripId(refTripId);
+  row[0]=[platePrefix,plateNumber,province].filter(Boolean).join(&#x27; &#x27;);
+  row[2]=plazaCode(plaza);
+  const fullTime=seconds?(timeHm?`${timeHm}:${seconds.padStart(2,&#x27;0&#x27;)}`:seconds):timeHm;
+  row[3]=[dateStr,fullTime].filter(Boolean).join(&#x27; &#x27;);
+  row[4]=monthFrom(row[3]);
+  row[7]=MODE_PRESETS[currentMode].overrideCol8??ref;
+  return {row,warnings:[],meta:{ref,plaza,vehicle:vehicleClass,highway,lane,reason},recognized:!!(platePrefix||plateNumber||province||plaza||ref||dateStr||timeHm)};
+}
+
+function excelCell(v,multiline=false){let s=multiline?String(v??&#x27;&#x27;).replace(/\r\n?/g,&#x27;\n&#x27;).split(&#x27;\n&#x27;).map(clean).join(&#x27;\n&#x27;).trim():clean(v);if(/^[=+@-]/.test(s)&amp;&amp;!/^[-]+$/.test(s))s=&quot;&#x27;&quot;+s;return /[&quot;\t\r\n]/.test(s)?&#x27;&quot;&#x27;+s.replace(/&quot;/g,&#x27;&quot;&quot;&#x27;)+&#x27;&quot;&#x27;:s;}
+function toTSV(rows){return rows.map(r=&gt;r.map((v,i)=&gt;i===10?&#x27;&#x27;:excelCell(v)).join(&#x27;\t&#x27;)).join(&#x27;\n&#x27;);}
+
+const $=id=&gt;document.getElementById(id);
+let active=null,history=[],operatorName=&#x27;&#x27;,currentId=null,seq=0,parseTimer,toastTimer,sourceMeta={},sourceWarnings=[];
+const fields=[],tableInputs=[];
+const COL2_7_OPTIONS = [&#x27;ตรวจสอบรายการผ่านทาง&#x27;, &#x27;ตรวจสอบการผ่านทางที่ผิดกฎหมาย&#x27;, &#x27;ตรวจสอบการผ่านทางที่ได้รับการยกเว้น&#x27;, &#x27;ตรวจสอบรายการผ่านทางอนุมัติผ่านทางพิเศษ&#x27;, &#x27;-&#x27;];
+const COL10_OPTIONS = [&#x27;สร้างTXNเท่านั้น&#x27;, &#x27;สร้างTXN+ยิงpostman&#x27;, &#x27;ยิงpostmanเท่านั้น&#x27;, &#x27;-&#x27;, &#x27;แก้ไขจาก RCF&#x27;];
+const OPERATOR_NAMES=[&quot;ปอร์ลี่&quot;, &quot;แนน&quot;, &quot;ปาล์ม&quot;, &quot;ซัน&quot;, &quot;นนท์&quot;, &quot;นิว&quot;, &quot;ภีม&quot;, &quot;มิ&quot;, &quot;ไอซ์บ้านแพร้ว&quot;, &quot;ฟีม&quot;, &quot;เบียร์&quot;, &quot;เบ๊บ&quot;, &quot;เฟิร์ส&quot;, &quot;หมวย&quot;, &quot;นาเดีย&quot;, &quot;ปุ๊ก&quot;, &quot;เตาบะห์&quot;, &quot;ดีดี้&quot;, &quot;เป๋าเป้&quot;, &quot;ป๊อบ&quot;, &quot;มันแกว&quot;];
+const fieldTitles=[&#x27;ทะเบียนรถ&#x27;,&#x27;ประเภทงาน&#x27;,&#x27;ด่าน (ตัวย่อ)&#x27;,&#x27;วัน เวลา&#x27;,&#x27;เดือน (ภาษาไทย)&#x27;,&#x27;รหัส/ค่าคงที่&#x27;,&#x27;ประเภทตรวจสอบ&#x27;,&#x27;Ref Trip Id&#x27;,&#x27;การดำเนินการ&#x27;,&#x27;หมายเหตุระบบ&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;ชื่อผู้ปฏิบัติงาน&#x27;];
+const placeholders=[&#x27;กธ 3407 กำแพงเพชร&#x27;,&#x27;&#x27;,&#x27;TC2&#x27;,&#x27;03/11/2026 00:00:08&#x27;,&#x27;พฤศจิกายน&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;รหัส Ref Trip Id 31 ตัว&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;เลือกชื่อผู้ปฏิบัติงาน&#x27;];
+
+function el(tag,cls=&#x27;&#x27;,text=&#x27;&#x27;){const x=document.createElement(tag);if(cls)x.className=cls;if(text)x.textContent=text;return x;}
+function btn(text,fn,cls=&#x27;minor&#x27;){const b=el(&#x27;button&#x27;,cls,text);b.type=&#x27;button&#x27;;b.addEventListener(&#x27;click&#x27;,fn);return b;}
+function makeField(i){
+  if(i===1||i===6){
+    const select=el(&#x27;select&#x27;);
+    for(const opt of COL2_7_OPTIONS){const option=el(&#x27;option&#x27;,&#x27;&#x27;,opt);option.value=opt;select.append(option);}
+    return select;
+  }
+  if(i===9){
+    const select=el(&#x27;select&#x27;);
+    for(const opt of COL10_OPTIONS){const option=el(&#x27;option&#x27;,&#x27;&#x27;,opt);option.value=opt;select.append(option);}
+    return select;
+  }
+  if(i===11){
+    const select=el(&#x27;select&#x27;);
+    const placeholder=el(&#x27;option&#x27;,&#x27;&#x27;,&#x27;-- เลือกชื่อ --&#x27;);
+    placeholder.value=&#x27;&#x27;;select.append(placeholder);
+    for(const name of OPERATOR_NAMES){const option=el(&#x27;option&#x27;,&#x27;&#x27;,name);option.value=name;select.append(option);}
+    return select;
+  }
+  const inp=el(&#x27;input&#x27;);inp.type=&#x27;text&#x27;;if(i===7)inp.maxLength=34;return inp;
+}
+
+function init(){
+  HEADERS.forEach((h,i)=&gt;{
+    const th=el(&#x27;th&#x27;,&#x27;&#x27;,`${i+1}. ${h}`);$(&#x27;headers&#x27;).append(th);
+    const cls=[0,7].includes(i)?&#x27; key&#x27;:i===2?&#x27; green&#x27;:i===4?&#x27; amber&#x27;:i===10?&#x27; blank&#x27;:&#x27;&#x27;;
+    const card=el(&#x27;div&#x27;,&#x27;field&#x27;+cls);
+    const lr=el(&#x27;div&#x27;,&#x27;labelrow&#x27;);
+    const label=el(&#x27;label&#x27;,&#x27;&#x27;,`${i+1}. ${fieldTitles[i]}`);label.htmlFor=&#x27;col_&#x27;+(i+1);
+    lr.append(label,btn(&#x27;คัดลอก&#x27;,()=&gt;copySingle(i),&#x27;mini&#x27;));card.append(lr);
+    const inp=makeField(i);inp.id=&#x27;col_&#x27;+(i+1);inp.placeholder=placeholders[i];inp.spellcheck=false;inp.readOnly=i===10;
+    inp.addEventListener([1,6,9,11].includes(i)?&#x27;change&#x27;:&#x27;input&#x27;,()=&gt;edit(i,inp.value));
+    fields.push(inp);card.append(inp);
+    if(i===7){
+      const q=el(&#x27;div&#x27;,&#x27;quick&#x27;);q.append(btn(&#x27;สลับต่อท้าย _1&#x27;,toggleSuffix,&#x27;mini&#x27;));card.append(q);
+      const badge=el(&#x27;span&#x27;,&#x27;refhint&#x27;);badge.id=&#x27;refLength&#x27;;card.append(badge);
+    }
+    if(i===2){
+      const q=el(&#x27;div&#x27;,&#x27;quick&#x27;);
+      [&#x27;TC1&#x27;,&#x27;TC2&#x27;,&#x27;TY1&#x27;,&#x27;TY2&#x27;].forEach(v=&gt;q.append(btn(v,()=&gt;edit(2,v),&#x27;mini&#x27;)));
+      card.append(q);
+    }
+    $(&#x27;fields&#x27;).append(card);
+  });
+  const tr=el(&#x27;tr&#x27;);
+  HEADERS.forEach((h,i)=&gt;{
+    const td=el(&#x27;td&#x27;);td.style.minWidth=([0,7,8].includes(i)?225:[1,3,6,9,11].includes(i)?170:95)+&#x27;px&#x27;;
+    const inp=makeField(i);inp.setAttribute(&#x27;aria-label&#x27;,h);inp.readOnly=i===10;inp.spellcheck=false;
+    inp.addEventListener([1,6,9,11].includes(i)?&#x27;change&#x27;:&#x27;input&#x27;,()=&gt;edit(i,inp.value));
+    tableInputs.push(inp);td.append(inp);tr.append(td);
+  });
+  $(&#x27;preview&#x27;).append(tr);
+  for(let m=1;m&lt;=3;m++)$(&#x27;mode&#x27;+m).onclick=()=&gt;selectMode(m);
+  render();renderHistory();
+}
+
+function toast(message,error=false){const t=$(&#x27;toast&#x27;);t.textContent=message;t.className=&#x27;toast show&#x27;+(error?&#x27; error&#x27;:&#x27;&#x27;);clearTimeout(toastTimer);toastTimer=setTimeout(()=&gt;t.className=&#x27;toast&#x27;,3200);}
+function render(){const row=active||blankRow(operatorName);row.forEach((v,i)=&gt;{if(fields[i].value!==v)fields[i].value=v;if(tableInputs[i].value!==v)tableInputs[i].value=v;});$(&#x27;preview&#x27;).hidden=!active;$(&#x27;empty&#x27;).hidden=!!active;$(&#x27;count&#x27;).textContent=active?&#x27;1 รายการ&#x27;:&#x27;ว่าง&#x27;;$(&#x27;copyRow&#x27;).disabled=!active;$(&#x27;copyHeader&#x27;).disabled=!active;updateModeUI();updateStatus();}
+function issues(){if(!active)return [];const out=[];if(!active[0])out.push(&#x27;ยังไม่มีทะเบียน&#x27;);if(!active[2])out.push(&#x27;ยังไม่มีด่าน&#x27;);else if(!/^(TC|TY)[12]$/.test(active[2]))out.push(&#x27;ตรวจสอบรหัสด่าน&#x27;);if(!dateTime(active[3]))out.push(&#x27;ตรวจสอบวันเวลา&#x27;);if(currentMode!==3&amp;&amp;!/^[0-9]{30}[A-Z](?:_[0-9]+)?$/.test(active[7]))out.push(&#x27;ตรวจสอบรูปแบบ Ref Trip Id&#x27;);return out;}
+function updateStatus(){const w=$(&#x27;warning&#x27;),s=$(&#x27;status&#x27;);let a=issues();w.textContent=a.join(&#x27; • &#x27;);w.className=&#x27;notice&#x27;+(a.length?&#x27; show&#x27;:&#x27;&#x27;);s.className=&#x27;status&#x27;+(active?(a.length?&#x27; warn&#x27;:&#x27; ok&#x27;):&#x27;&#x27;);s.textContent=active?(a.length?&#x27;โปรดตรวจสอบข้อมูล&#x27;:&#x27;พร้อมคัดลอก 12 ช่อง&#x27;):&#x27;รอวางข้อความ&#x27;;}
+function showMeta(meta){$(&#x27;meta&#x27;).replaceChildren();for(const [label,val] of [[&#x27;Ref Trip Id&#x27;,meta.ref],[&#x27;Class&#x27;,meta.vehicle],[&#x27;สายทาง&#x27;,meta.highway],[&#x27;ช่อง&#x27;,meta.lane],[&#x27;เหตุผล&#x27;,meta.reason]])if(val)$(&#x27;meta&#x27;).append(el(&#x27;span&#x27;,&#x27;chip&#x27;,label+&#x27;: &#x27;+val));$(&#x27;summary&#x27;).textContent=meta.ref?&#x27;Ref Trip Id: &#x27;+meta.ref:&#x27;ข้อมูลจากระบบจะแสดงที่นี่&#x27;;}
+function edit(i,val){if(i===10||(i===7&amp;&amp;currentMode===3))return;if(i===11){if(val&amp;&amp;!OPERATOR_NAMES.includes(val))return;operatorName=val;}if(!active){if(i===11){render();return;}active=blankRow(operatorName);sourceWarnings=[];sourceMeta={};}active[i]=i===7?sanitizeRefTripId(val):val.replace(/[\r\n\t]/g,&#x27; &#x27;);if(i===7)lastRef=active[7];if(i===3)active[4]=monthFrom(val);active[10]=&#x27;&#x27;;render();syncHistory();}
+function updateModeUI(){for(let m=1;m&lt;=3;m++)$(&#x27;mode&#x27;+m).setAttribute(&#x27;aria-pressed&#x27;,String(m===currentMode));fields[7].readOnly=tableInputs[7].readOnly=currentMode===3;const v=(active||blankRow(operatorName))[7];$(&#x27;refLength&#x27;).textContent=v===&#x27;---&#x27;?&#x27;ล็อกเป็น --- ในโหมด 3&#x27;:v.split(&#x27;_&#x27;)[0].length+&#x27;/31 ตัวหลัก&#x27;+(v.includes(&#x27;_&#x27;)?&#x27; · &#x27;+v.slice(v.indexOf(&#x27;_&#x27;)):&#x27;&#x27;);}
+function selectMode(m){if(m===currentMode)return;currentMode=m;if(active){const p=MODE_PRESETS[m];active[1]=p.col2;active[5]=p.col6;active[6]=p.col7;active[7]=p.overrideCol8??lastRef;active[8]=p.col9;active[9]=p.col10;syncHistory();}render();toast(MODE_PRESETS[m].name);}
+function toggleSuffix(){if(currentMode===3){toast(&#x27;โหมด 3 ล็อก Ref Trip Id เป็น ---&#x27;);return;}if(!active||!active[7]||active[7]===&#x27;---&#x27;){toast(&#x27;ยังไม่มีรหัส Ref Trip Id&#x27;,true);return;}const v=active[7];edit(7,v.endsWith(&#x27;_1&#x27;)?v.slice(0,-2):v.split(&#x27;_&#x27;)[0]+&#x27;_1&#x27;);}
+function addHistory(){if(!active)return;const key=sourceMeta.ref;const last=history[0];if(last&amp;&amp;((key&amp;&amp;last.meta.ref===key&amp;&amp;last.mode===currentMode)||(!key&amp;&amp;last.row[0]===active[0]&amp;&amp;last.row[3]===active[3]&amp;&amp;last.mode===currentMode))){currentId=last.id;syncHistory();return;}currentId=++seq;history.unshift({id:currentId,row:[...active],meta:{...sourceMeta},mode:currentMode,lastRef,warnings:[...sourceWarnings],time:new Date().toLocaleTimeString(&#x27;th-TH&#x27;)});history=history.slice(0,50);renderHistory();}
+function syncHistory(){const item=history.find(x=&gt;x.id===currentId);if(item&amp;&amp;active){item.row=[...active];item.mode=currentMode;item.lastRef=lastRef;item.warnings=[...sourceWarnings];renderHistory();}}
+function process(raw,{auto=false,record=true}={}){if(!raw.trim())return;const result=parse(raw,operatorName);if(!result.recognized){active=null;lastRef=&quot;&quot;;currentId=null;sourceWarnings=[];sourceMeta={};render();showMeta({});toast(&#x27;ไม่พบหัวข้อข้อมูลจากระบบ กรุณาวางข้อความต้นฉบับ&#x27;,true);return;}active=result.row;lastRef=result.meta.ref;sourceWarnings=result.warnings;sourceMeta=result.meta;currentId=null;render();showMeta(sourceMeta);if(record)addHistory();if(auto&amp;&amp;$(&#x27;auto&#x27;).checked){if(issues().length)toast(&#x27;พบข้อมูลไม่ครบหรือผิดรูปแบบ กรุณาตรวจสอบก่อนคัดลอก&#x27;,true);else copyCurrent(false);}else toast(issues().length?&#x27;แกะข้อมูลแล้ว กรุณาตรวจสอบช่องที่แจ้งเตือน&#x27;:&#x27;แกะข้อมูล 12 ช่องเรียบร้อย&#x27;);}
+function renderHistory(){$(&#x27;histCount&#x27;).textContent=history.length;$(&#x27;history&#x27;).replaceChildren();$(&#x27;copyAll&#x27;).disabled=!history.length;$(&#x27;clearAll&#x27;).disabled=!history.length;if(!history.length){$(&#x27;history&#x27;).append(el(&#x27;div&#x27;,&#x27;empty&#x27;,&#x27;ยังไม่มีประวัติในรอบนี้&#x27;));return;}history.forEach(item=&gt;{const r=el(&#x27;div&#x27;,&#x27;history-row&#x27;),d=el(&#x27;div&#x27;,&#x27;desc&#x27;);d.append(el(&#x27;span&#x27;,&#x27;&#x27;,item.time),el(&#x27;strong&#x27;,&#x27;&#x27;,item.row[0]||&#x27;ไม่พบทะเบียน&#x27;),el(&#x27;span&#x27;,&#x27;chip&#x27;,item.row[2]||&#x27;-&#x27;),el(&#x27;span&#x27;,&#x27;&#x27;,item.row[3]||&#x27;-&#x27;),el(&#x27;span&#x27;,&#x27;chip&#x27;,&#x27;โหมด &#x27;+item.mode),el(&#x27;span&#x27;,&#x27;&#x27;,item.row[11]||&#x27;-&#x27;));const a=el(&#x27;div&#x27;,&#x27;actions&#x27;);a.append(btn(&#x27;เรียกดู&#x27;,()=&gt;{active=[...item.row];currentMode=item.mode;lastRef=item.lastRef;operatorName=active[11];sourceMeta={...item.meta};sourceWarnings=[...item.warnings];currentId=item.id;$(&#x27;raw&#x27;).value=&#x27;&#x27;;render();showMeta(sourceMeta);toast(&#x27;เรียกคืนรายการแล้ว&#x27;);}),btn(&#x27;คัดลอกแถวนี้&#x27;,()=&gt;copyText(toTSV([item.row]),&#x27;คัดลอกประวัติ 12 ช่องแล้ว&#x27;),&#x27;green-btn&#x27;));r.append(d,a);$(&#x27;history&#x27;).append(r);});}
+async function copyText(text,message){const prev=document.activeElement;let ok=false;const ta=el(&#x27;textarea&#x27;);ta.value=text;ta.style.cssText=&#x27;position:fixed;left:-9999px;top:0;opacity:0&#x27;;document.body.append(ta);ta.select();try{ok=document.execCommand(&#x27;copy&#x27;);}catch{}ta.remove();if(prev&amp;&amp;prev.focus)prev.focus({preventScroll:true});if(!ok&amp;&amp;navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);ok=true;}catch{}}if(ok)toast(message);else toast(&#x27;เบราว์เซอร์ไม่อนุญาตให้คัดลอก กรุณาลองคลิกปุ่มอีกครั้ง&#x27;,true);return ok;}
+function copySingle(i){const v=(active||blankRow(operatorName))[i];if(!v){toast(&#x27;ช่องนี้เว้นว่าง&#x27;);return;}copyText(clean(v),&#x27;คัดลอกช่อง &#x27;+(i+1)+&#x27; แล้ว&#x27;);}
+function copyCurrent(header=false){if(!active)return;const rows=[active];const text=header?HEADERS.join(&#x27;\t&#x27;)+&#x27;\n&#x27;+toTSV([active]):toTSV(rows);copyText(text,&#x27;คัดลอก 12 ช่องแล้ว · ไปวางใน Excel ได้เลย&#x27;+(issues().length?&#x27; (มีข้อมูลที่ควรตรวจสอบ)&#x27;:&#x27;&#x27;));}
+function reset(){clearTimeout(parseTimer);active=null;lastRef=&quot;&quot;;currentId=null;sourceWarnings=[];sourceMeta={};$(&#x27;raw&#x27;).value=&#x27;&#x27;;render();showMeta({});toast(&#x27;ล้างหน้าจอแล้ว · เก็บชื่อผู้ปฏิบัติงานและประวัติไว้&#x27;);}
+window.addEventListener(&#x27;paste&#x27;,e=&gt;{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||(e.target instanceof HTMLTextAreaElement&amp;&amp;e.target!==$(&#x27;raw&#x27;)))return;const s=e.clipboardData?.getData(&#x27;text/plain&#x27;);if(!s?.trim())return;e.preventDefault();clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=s;process(s,{auto:true});});
+$(&#x27;raw&#x27;).addEventListener(&#x27;input&#x27;,()=&gt;{clearTimeout(parseTimer);parseTimer=setTimeout(()=&gt;{if($(&#x27;raw&#x27;).value.trim())process($(&#x27;raw&#x27;).value,{record:false});},250);});
+$(&#x27;sample&#x27;).onclick=()=&gt;{clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=SAMPLE;process(SAMPLE,{record:false});};$(&#x27;clear&#x27;).onclick=reset;$(&#x27;clearRaw&#x27;).onclick=()=&gt;{clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=&#x27;&#x27;;$(&#x27;raw&#x27;).focus();};$(&#x27;copyRow&#x27;).onclick=()=&gt;copyCurrent();$(&#x27;copyHeader&#x27;).onclick=()=&gt;copyCurrent(true);$(&#x27;copyAll&#x27;).onclick=()=&gt;{if(history.length)copyText(toTSV([...history].reverse().map(x=&gt;x.row)),&#x27;คัดลอกประวัติ &#x27;+history.length+&#x27; รายการแล้ว&#x27;);};$(&#x27;clearAll&#x27;).onclick=()=&gt;{if(history.length&amp;&amp;confirm(&#x27;ยืนยันล้างประวัติ &#x27;+history.length+&#x27; รายการ?&#x27;)){history=[];currentId=null;renderHistory();toast(&#x27;ล้างประวัติแล้ว&#x27;);}};init();
+&lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe>
+
+  <!-- FRAME 1: 13 COLUMNS (MLPR) -->
+  <iframe id="frame1" title="MLPR" allow="clipboard-write" hidden srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;th&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;โปรแกรมแกะข้อมูลรายการผ่านทาง MLPR&lt;/title&gt;
+&lt;style&gt;
+:root{
+  --navy:#0f172a;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;
+  --indigo:#4f46e5;--indigo-light:#eef2ff;--indigo-border:#c7d2fe;
+  --green:#059669;--green-dark:#047857;--green-light:#ecfdf5;--green-border:#a7f3d0;
+  --amber-light:#fffbeb;--amber-border:#fde68a;
+  --paper:#ffffff;--bg:#eef2f6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font:14px/1.55 &#x27;Sarabun&#x27;,&#x27;Leelawadee UI&#x27;,Tahoma,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg, #eef2f6 0%, #e2e8f0 100%);
+  min-height:100vh;
+}
+button,input,textarea,select{font:inherit}
+button{
+  cursor:pointer;border:1px solid #cbd5e1;border-radius:999px;padding:8px 16px;
+  background:#fff;color:var(--ink);font-weight:700;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:0 1px 3px rgba(15,23,42,0.04);
+}
+button:hover:not(:disabled){background:#f8fafc;border-color:#94a3b8;transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,0.08)}
+button:active:not(:disabled){transform:translateY(0)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #059669;outline-offset:2px}
+button:disabled{opacity:0.45;cursor:not-allowed;box-shadow:none}
+
+/* Sub-Header Toolbar */
+.toolbar{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(226,232,240,0.8);position:sticky;top:0;z-index:5;
+  box-shadow:0 4px 20px rgba(15,23,42,0.04);
+}
+.toolbar-inner{
+  max-width:1540px;margin:auto;padding:12px 28px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.tool-title{display:flex;align-items:center;gap:12px}
+.tool-badge{
+  background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none;
+  font-size:11.5px;font-weight:800;padding:4px 12px;border-radius:999px;
+  box-shadow:0 2px 8px rgba(5, 150, 105, 0.28);
+}
+.tool-title h1{font-size:16.5px;margin:0;color:var(--navy);font-weight:800}
+.head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.head-actions .danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.head-actions .danger:hover{background:#ffe4e6;border-color:#fda4af}
+.toggle{
+  display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+  background:#f8fafc;border:1px solid #cbd5e1;padding:7px 14px;border-radius:999px;cursor:pointer;
+  transition:all 0.2s;
+}
+.toggle:hover{background:#fff;border-color:#94a3b8}
+.toggle input{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
+
+main{max-width:1540px;margin:22px auto;padding:0 28px 48px;display:grid;gap:22px}
+.work{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,2.2fr);gap:22px}
+.panel{
+  background:var(--paper);border:1px solid rgba(255,255,255,0.9);border-radius:24px;
+  padding:24px;box-shadow:0 10px 30px rgba(15,23,42,0.05), 0 1px 3px rgba(15,23,42,0.03);min-width:0;
+}
+.paste{border:2px dashed #6ee7b7;background:linear-gradient(145deg, #ffffff 0%, #f0fdf9 100%);display:flex;flex-direction:column}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.section-head h2{font-size:16.5px;margin:0;color:var(--navy);font-weight:800;display:flex;align-items:center;gap:10px}
+.step-num{
+  background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;width:26px;height:26px;border-radius:50%;
+  display:inline-grid;place-items:center;font-size:12.5px;font-weight:800;
+  box-shadow:0 3px 8px rgba(5, 150, 105, 0.28);
+}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.paste textarea{
+  width:100%;min-height:245px;flex:1;resize:vertical;padding:14px 16px;
+  border:1.5px solid #cbd5e1;border-radius:16px;background:#fff;
+  font:12.5px/1.6 Consolas,&#x27;Leelawadee UI&#x27;,Tahoma,monospace;color:var(--ink);
+  box-shadow:inset 0 2px 5px rgba(15,23,42,0.03);transition:all 0.2s;
+}
+.paste textarea:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(99,102,241,0.1)}
+.minor{font-size:12px;padding:6px 14px;color:var(--indigo);background:var(--indigo-light);border-color:var(--indigo-border);border-radius:999px}
+.minor:hover:not(:disabled){background:#e0e7ff}
+.meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--indigo-light);color:#3730a3;border:1px solid var(--indigo-border);border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:700;overflow-wrap:anywhere}
+.status{font-size:12px;font-weight:800;padding:5px 14px;border-radius:999px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.status.ok{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.status.warn{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+
+/* Mode Selector */
+.modebar{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  margin:0 0 18px;padding:6px;background:#f1f5f9;border-radius:999px;border:1px solid #e2e8f0;
+}
+.modebar button{
+  font-size:12.5px;padding:10px 12px;border:none;background:transparent;color:#475569;border-radius:999px;box-shadow:none;
+}
+.modebar button:hover{color:var(--navy);background:rgba(255,255,255,0.7);transform:none}
+.modebar button[aria-pressed=&quot;true&quot;]{
+  background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#fff;
+  box-shadow:0 4px 12px rgba(79,70,229,0.3);
+}
+
+/* Fields Grid */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.field{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:12px 14px;
+  min-width:0;transition:all 0.2s ease;
+}
+.field:hover{border-color:#cbd5e1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,0.03)}
+.field.key{background:linear-gradient(145deg, #eef2ff 0%, #e0e7ff 100%);border-color:#c7d2fe}
+.field.green{background:linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);border-color:#a7f3d0}
+.field.amber{background:linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);border-color:#fde68a}
+.field.blank{background:#f1f5f9;opacity:0.7}
+.field label{font-size:12px;font-weight:800;display:block;min-width:0;color:#334155}
+.labelrow{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-bottom:8px}
+.mini{
+  font-size:11px;padding:3px 9px;border:1px solid rgba(79,70,229,0.2);
+  background:rgba(255,255,255,0.85);color:var(--indigo);border-radius:999px;box-shadow:none;
+}
+.mini:hover{background:#fff;border-color:var(--indigo)}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid #cbd5e1;border-radius:12px;background:#fff;
+  padding:8px 12px;min-width:0;color:var(--navy);font-size:13px;transition:all 0.2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
+.field textarea{resize:vertical;line-height:1.45;min-height:54px}
+.field input[readonly]{background:#e2e8f0;color:#64748b;border-color:#cbd5e1}
+.field.key input,.field.green input,.field.key textarea{font-weight:700}
+.field select{border-color:#6ee7b7;font-weight:700;cursor:pointer}
+.quick{display:flex;gap:5px;margin-top:8px}
+.quick button{
+  flex:1;font-size:11px;padding:4px 6px;background:#d1fae5;color:#065f46;
+  border:1px solid #a7f3d0;border-radius:999px;box-shadow:none;
+}
+.quick button:hover{background:#a7f3d0}
+.refhint{font-size:11px;color:#4f46e5;font-weight:700;display:block;margin-top:6px}
+
+.info{margin-top:14px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.notice{
+  display:none;background:#fffbeb;border:1px solid #fcd34d;border-left:5px solid #f59e0b;
+  color:#92400e;padding:12px 16px;border-radius:16px;margin:14px 0 0;font-size:12.5px;font-weight:600;
+}
+.notice.show{display:block}
+
+/* Main Copy CTA */
+.copy-main{
+  background:linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color:#fff;border:none;border-radius:999px;padding:17px 28px;
+  font-size:17.5px;font-weight:800;letter-spacing:0.3px;
+  box-shadow:0 10px 25px rgba(5,150,105,0.32);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.copy-main:hover:not(:disabled){
+  background:linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow:0 12px 30px rgba(5,150,105,0.42);transform:translateY(-2px);
+}
+
+/* Table */
+.tablewrap{overflow:auto;border-radius:18px;border:1px solid #cbd5e1;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.02)}
+table{border-collapse:collapse;width:100%;min-width:2150px;text-align:left}
+th{
+  background:#1e293b;color:#f8fafc;font-size:12px;font-weight:700;
+  padding:12px 14px;border-right:1px solid #334155;white-space:nowrap;
+}
+td{padding:7px;border-right:1px solid #e2e8f0;background:#fff}
+td input,td select,td textarea{
+  border:1px solid transparent;background:transparent;border-radius:10px;
+  padding:8px 10px;width:100%;min-width:85px;color:var(--ink);font-size:13px;
+}
+td textarea{resize:vertical;line-height:1.45;min-height:48px}
+td input:hover,td input:focus,td select:hover,td select:focus,td textarea:hover,td textarea:focus{border-color:#94a3b8;background:#f8fafc}
+td input[readonly]{background:#f1f5f9;color:#64748b}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;background:#f8fafc;border-radius:16px;margin-top:10px}
+
+/* History */
+.history-list{max-height:300px;overflow:auto;padding-right:4px}
+.history-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;border:1px solid #e2e8f0;border-radius:18px;margin-top:10px;background:#f8fafc;
+  transition:all 0.2s;
+}
+.history-row:hover{background:#fff;border-color:#cbd5e1;box-shadow:0 4px 12px rgba(15,23,42,0.04)}
+.history-row .desc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px}
+.history-row .desc strong{color:var(--indigo);font-size:13.5px}
+.history-row .desc span:last-child{white-space:pre-line}
+.history-row .actions{display:flex;gap:8px}
+.history-row button{font-size:12px;padding:7px 14px;border-radius:999px}
+.green-btn{background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none}
+.green-btn:hover{background:linear-gradient(135deg, #059669 0%, #047857 100%)}
+.danger-text{color:#be123c;background:#fff1f2;border-color:#fecdd3}
+.danger-text:hover:not(:disabled){background:#ffe4e6}
+
+.toast{
+  position:fixed;right:24px;bottom:24px;z-index:99;max-width:calc(100vw - 48px);
+  background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);display:none;border:1px solid rgba(16,185,129,0.5);
+}
+.toast.show{display:block;animation:slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)}
+.toast.error{background:rgba(136,19,55,0.95);border-color:rgba(251,113,133,0.5)}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}
+kbd{font:11.5px Consolas,monospace;border:1px solid #cbd5e1;border-radius:6px;padding:2px 6px;background:#fff;color:#334155;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+.small-footer{font-size:11.5px;color:var(--muted);text-align:center;padding-top:6px}
+
+@media(max-width:1050px){.work{grid-template-columns:1fr}.paste textarea{min-height:160px}
+@media(max-width:650px){
+  main{padding:0 14px 28px;margin-top:14px}
+  .toolbar-inner{padding:10px 14px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modebar{grid-template-columns:1fr;border-radius:20px}
+  .panel{padding:16px;border-radius:20px}
+  .copy-main{font-size:15px}
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;toolbar&quot;&gt;
+  &lt;div class=&quot;toolbar-inner&quot;&gt;
+    &lt;div class=&quot;tool-title&quot;&gt;
+      &lt;span class=&quot;tool-badge&quot;&gt;13 คอลัมน์&lt;/span&gt;
+      &lt;h1&gt;แกะข้อมูลรายการผ่านทาง MLPR&lt;/h1&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;head-actions&quot;&gt;
+      &lt;label class=&quot;toggle&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;auto&quot; checked&gt; คัดลอกอัตโนมัติทันทีที่วาง&lt;/label&gt;
+      &lt;button id=&quot;sample&quot;&gt;ทดสอบข้อความตัวอย่าง&lt;/button&gt;
+      &lt;button id=&quot;clear&quot; class=&quot;danger&quot;&gt;ล้างหน้าจอ&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;main&gt;
+  &lt;div class=&quot;work&quot;&gt;
+    &lt;section class=&quot;panel paste&quot;&gt;
+      &lt;div class=&quot;section-head&quot;&gt;
+        &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;1&lt;/span&gt; กล่องรับข้อความต้นฉบับ&lt;/h2&gt;
+        &lt;button class=&quot;minor&quot; id=&quot;clearRaw&quot;&gt;ล้างกล่อง&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;p class=&quot;sub&quot;&gt;ลากคลุมข้อมูลจากรหัส Trip ID ถึงผู้ดำเนินการในส่วนการแก้ไขข้อมูล แล้วกด &lt;kbd&gt;Ctrl+V&lt;/kbd&gt; บนหน้านี้ได้เลย&lt;/p&gt;
+      &lt;textarea id=&quot;raw&quot; placeholder=&quot;วางข้อความจากระบบรายการผ่านทางที่นี่…&quot; spellcheck=&quot;false&quot;&gt;&lt;/textarea&gt;
+      &lt;div class=&quot;meta&quot; id=&quot;meta&quot;&gt;&lt;/div&gt;
+      &lt;p class=&quot;sub&quot; style=&quot;margin:10px 0 0;font-size:11.5px&quot;&gt;แปลงด่านอัตโนมัติ: ทับช้าง 1/2 → &lt;strong&gt;TC1/TC2&lt;/strong&gt; · ธัญบุรี 1/2 → &lt;strong&gt;TY1/TY2&lt;/strong&gt;&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;panel&quot;&gt;
+      &lt;div class=&quot;section-head&quot;&gt;
+        &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;2&lt;/span&gt; ข้อมูลที่จำแนกได้ (13 คอลัมน์)&lt;/h2&gt;
+        &lt;span class=&quot;status&quot; id=&quot;status&quot;&gt;รอวางข้อความ&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;p class=&quot;sub&quot;&gt;กรณีเจ้าหน้าที่อนุมัติรายการผ่านทางผิดพลาด · ช่อง 12 เลือกชื่อผู้ปฏิบัติงาน (ระบบจำชื่อไว้ให้ตลอดรอบนี้)&lt;/p&gt;
+      &lt;div id=&quot;fields&quot; class=&quot;grid&quot;&gt;&lt;/div&gt;
+      &lt;div id=&quot;warning&quot; class=&quot;notice&quot; role=&quot;status&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;info&quot; id=&quot;summary&quot;&gt;พร้อมรับข้อความใหม่&lt;/div&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+
+  &lt;button class=&quot;copy-main&quot; id=&quot;copyRow&quot;&gt;
+    &lt;span&gt;📋 คัดลอกข้อมูลทั้ง 13 ช่อง (นำไปวางใน Excel ได้เลย)&lt;/span&gt;
+  &lt;/button&gt;
+
+  &lt;section class=&quot;panel&quot;&gt;
+    &lt;div class=&quot;section-head&quot;&gt;
+      &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;3&lt;/span&gt; ตารางพรีวิว 13 คอลัมน์ &lt;span class=&quot;status&quot; id=&quot;count&quot;&gt;ว่าง&lt;/span&gt;&lt;/h2&gt;
+      &lt;button class=&quot;minor&quot; id=&quot;copyHeader&quot;&gt;คัดลอกพร้อมหัวตาราง&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;tablewrap&quot;&gt;
+      &lt;table&gt;&lt;thead&gt;&lt;tr id=&quot;headers&quot;&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody id=&quot;preview&quot;&gt;&lt;/tbody&gt;&lt;/table&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;empty&quot; id=&quot;empty&quot;&gt;วางข้อความเพื่อแสดงข้อมูลในตารางพรีวิว&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;panel&quot;&gt;
+    &lt;div class=&quot;section-head&quot;&gt;
+      &lt;h2&gt;&lt;span class=&quot;step-num&quot;&gt;4&lt;/span&gt; ประวัติรายการในรอบนี้ &lt;span id=&quot;histCount&quot; class=&quot;status&quot;&gt;0&lt;/span&gt;&lt;/h2&gt;
+      &lt;div style=&quot;display:flex;gap:6px&quot;&gt;
+        &lt;button class=&quot;minor&quot; id=&quot;copyAll&quot;&gt;คัดลอกประวัติทั้งหมด&lt;/button&gt;
+        &lt;button class=&quot;minor danger-text&quot; id=&quot;clearAll&quot;&gt;ล้างประวัติ&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;p class=&quot;sub&quot;&gt;สูงสุด 50 รายการ · เรียงจากใหม่ไปเก่า · คัดลอกทั้งหมดตามลำดับเวลาที่บันทึก · ประวัติหายเมื่อปิดหรือรีเฟรชหน้า&lt;/p&gt;
+    &lt;div id=&quot;history&quot; class=&quot;history-list&quot;&gt;&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;div class=&quot;small-footer&quot;&gt;ประมวลผลในเครื่องทั้งหมด · ไม่ส่งข้อมูลไปยังภายนอก · โปรแกรมจัดรูปแบบข้อมูลเท่านั้น ไม่สร้าง TXN หรือยิง Postman จริง&lt;/div&gt;
+&lt;/main&gt;
+
+&lt;div id=&quot;toast&quot; class=&quot;toast&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+&#x27;use strict&#x27;;
+const HEADERS=[&#x27;หมวดทะเบียน&#x27;,&#x27;ตรวจสอบรายการผ่านทาง&#x27;,&#x27;ด่าน&#x27;,&#x27;วัน เวลา&#x27;,&#x27;เดือน&#x27;,&#x27;ทะเบียนรถซ้ำ&#x27;,&#x27;ประเภทตรวจสอบ&#x27;,&#x27;Ref Trip ID&#x27;,&#x27;สาเหตุ&#x27;,&#x27;การดำเนินการ&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;ชื่อผู้ปฏิบัติงาน&#x27;,&#x27;แจ้งหน้างาน&#x27;];
+const MONTHS=[&#x27;มกราคม&#x27;,&#x27;กุมภาพันธ์&#x27;,&#x27;มีนาคม&#x27;,&#x27;เมษายน&#x27;,&#x27;พฤษภาคม&#x27;,&#x27;มิถุนายน&#x27;,&#x27;กรกฎาคม&#x27;,&#x27;สิงหาคม&#x27;,&#x27;กันยายน&#x27;,&#x27;ตุลาคม&#x27;,&#x27;พฤศจิกายน&#x27;,&#x27;ธันวาคม&#x27;];
+const LABELS=[&#x27;รหัสอ้างอิง (Ref) Trip ID&#x27;,&#x27;รหัส Trip ID&#x27;,&#x27;Ref Trip Id&#x27;,&#x27;ช่วงเวลาผ่านทาง&#x27;,&#x27;ค่าธรรมเนียมการผ่านทาง&#x27;,&#x27;ป้ายทะเบียน&#x27;,&#x27;หมวดทะเบียน&#x27;,&#x27;หมวดอักษร&#x27;,&#x27;เลขทะเบียน&#x27;,&#x27;จังหวัด&#x27;,&#x27;ยี่ห้อ&#x27;,&#x27;สี&#x27;,&#x27;ประเภทรถ&#x27;,&#x27;รหัส Vehicle Class&#x27;,&#x27;ต้นทาง&#x27;,&#x27;สายทาง&#x27;,&#x27;ประเภทผู้ให้บริการ&#x27;,&#x27;ด่าน&#x27;,&#x27;ช่องทาง&#x27;,&#x27;ช่อง&#x27;,&#x27;รหัส TAG ข้อมูลใน RFID&#x27;,&#x27;การสร้างข้อมูล&#x27;,&#x27;การแก้ไขข้อมูล&#x27;,&#x27;ผู้ดำเนินการ&#x27;,&#x27;วันเวลาที่ทำการ&#x27;,&#x27;วันที่ผ่านทาง&#x27;,&#x27;ชั่วโมง-นาทีผ่านทาง&#x27;,&#x27;วินาทีเริ่มต้น&#x27;];
+const SAMPLE=`รหัส Trip ID:\t541922026112604585863653340643B
+รหัสอ้างอิง (Ref) Trip ID:\t-
+ช่วงเวลาผ่านทาง\t26/11/2026 04:58:58.636
+ค่าธรรมเนียมการผ่านทาง\t70.00
+ป้ายทะเบียน\tหมวดทะเบียน: 10
+เลขทะเบียน: 8629
+จังหวัด: ขอนแก่น
+ยี่ห้อ\t-
+สี\t-
+ประเภทรถ\t-
+รหัส Vehicle Class\tมากกว่า 6 ล้อ
+ต้นทาง\tสายทาง: ทางหลวงพิเศษระหว่างเมืองหมายเลข 9
+ประเภทผู้ให้บริการ: กรมทางหลวง
+ด่าน: ด่านธัญบุรี 1
+ช่อง: เลน 3
+รหัส TAG ข้อมูลใน RFID\t-
+การสร้างข้อมูล\tช่องทาง: System
+ผู้ดำเนินการ: System
+วันเวลาที่ทำการ: 26/11/2026 05:07:17.709
+การแก้ไขข้อมูล\tช่องทาง: MLPR
+ผู้ดำเนินการ: MLPR_Kanthika.nap`;
+
+function clean(s){return String(s??&#x27;&#x27;).replace(/[\t\r\n]+/g,&#x27; &#x27;).replace(/\s+/g,&#x27; &#x27;).trim();}
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,&#x27;\\$&amp;&#x27;);}
+function tokens(text){const s=String(text).replace(/\r\n?/g,&#x27;\n&#x27;).replace(/\u00a0/g,&#x27; &#x27;).replace(/[\u200b\ufeff]/g,&#x27;&#x27;);const re=new RegExp(&#x27;(?&lt;!\\S)(&#x27;+[...LABELS].sort((a,b)=&gt;b.length-a.length).map(esc).join(&#x27;|&#x27;)+&#x27;)(?=[:：\\s]|$)[ \\t]*[:：]?[ \\t]*&#x27;,&#x27;gi&#x27;);const matches=[...s.matchAll(re)];return matches.map((m,i)=&gt;({label:m[1],value:clean(s.slice(m.index+m[0].length,matches[i+1]?.index??s.length))}));}
+function monthFrom(s){const m=String(s).match(/(?:^|\s)\d{1,2}\/(\d{1,2})\/\d{4}(?=\s|$)/);return m?MONTHS[Number(m[1])-1]||&#x27;&#x27;:&#x27;&#x27;;}
+function dateTime(s){const m=String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})(?:\.\d+)?/);if(!m)return &#x27;&#x27;;const [,d,mo,y,h,mi,se]=m;const yy=Number(y)&gt;2400?Number(y)-543:Number(y);const check=new Date(Date.UTC(yy,Number(mo)-1,Number(d)));if(check.getUTCMonth()!==Number(mo)-1||check.getUTCDate()!==Number(d)||+h&gt;23||+mi&gt;59||+se&gt;59)return &#x27;&#x27;;return `${d.padStart(2,&#x27;0&#x27;)}/${mo.padStart(2,&#x27;0&#x27;)}/${y} ${h.padStart(2,&#x27;0&#x27;)}:${mi}:${se}`;}
+function plazaCode(s){const a=clean(s).replace(/\s+/g,&#x27;&#x27;);for(const [key,val] of [[&#x27;ทับช้าง1&#x27;,&#x27;TC1&#x27;],[&#x27;ทับช้าง2&#x27;,&#x27;TC2&#x27;],[&#x27;ธัญบุรี1&#x27;,&#x27;TY1&#x27;],[&#x27;ธัญบุรี2&#x27;,&#x27;TY2&#x27;]])if(a.includes(key))return val;const m=a.match(/^(TC[12]|TY[12])$/i);return m?m[1].toUpperCase():clean(s);}
+function blankRow(name=&#x27;&#x27;){return [&#x27;&#x27;, &#x27;ตรวจสอบรายการผ่านทาง&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;ตรวจสอบรายการผ่านทาง&#x27;,&#x27;&#x27;,&#x27;เจ้าหน้าที่อนุมัติรายการผ่านทางผิดพลาด&#x27;,&#x27;สร้างTXN+ยิงpostman&#x27;,&#x27;&#x27;,clean(name),&#x27;&#x27;];}
+
+function parse(text,name=&#x27;&#x27;){
+ const ts=tokens(text);const get=(...names)=&gt;ts.find(x=&gt;names.some(n=&gt;n.toLowerCase()===x.label.toLowerCase())&amp;&amp;x.value)?.value||&#x27;&#x27;;
+ const prefix=get(&#x27;หมวดทะเบียน&#x27;,&#x27;หมวดอักษร&#x27;),number=get(&#x27;เลขทะเบียน&#x27;),province=get(&#x27;จังหวัด&#x27;);const validPart=v=&gt;v&amp;&amp;!/^[-–—]+$/.test(v);const plate=[prefix,number,province].filter(validPart).join(&#x27; &#x27;);
+ const plaza=plazaCode(get(&#x27;ด่าน&#x27;));const dt=dateTime(get(&#x27;ช่วงเวลาผ่านทาง&#x27;)||[get(&#x27;วันที่ผ่านทาง&#x27;),get(&#x27;ชั่วโมง-นาทีผ่านทาง&#x27;)+&#x27;:&#x27;+get(&#x27;วินาทีเริ่มต้น&#x27;).padStart(2,&#x27;0&#x27;)].join(&#x27; &#x27;));
+ const editIndex=ts.findIndex(x=&gt;x.label===&#x27;การแก้ไขข้อมูล&#x27;);const source=editIndex&gt;=0?ts.slice(editIndex):ts;const operators=[...new Set(source.filter(x=&gt;x.label===&#x27;ผู้ดำเนินการ&#x27;).flatMap(x=&gt;x.value.match(/\b(?:MLPR|TG)_[A-Za-z0-9][A-Za-z0-9_.@-]*/gi)||[]))];
+ const mlpr=operators.length===1?operators[0]:&#x27;&#x27;;const trip=get(&#x27;รหัส Trip ID&#x27;);const ref=get(&#x27;รหัสอ้างอิง (Ref) Trip ID&#x27;,&#x27;Ref Trip Id&#x27;);const row=blankRow(name);row[7]=trip;row[0]=row[5]=plate;row[2]=plaza;row[3]=dt;row[4]=monthFrom(dt);row[12]=mlpr?&#x27;แจ้งหน้างาน\n&#x27;+mlpr:&#x27;&#x27;;
+ const warnings=[];if(!validPart(prefix)||!validPart(number)||!validPart(province))warnings.push(&#x27;ทะเบียนไม่ครบ (หมวด / เลข / จังหวัด)&#x27;);if(!plaza)warnings.push(&#x27;ไม่พบด่าน&#x27;);else if(!/^(TC|TY)[12]$/.test(plaza))warnings.push(&#x27;รหัสด่านไม่อยู่ใน 4 ด่านที่กำหนด&#x27;);if(!dt)warnings.push(&#x27;ไม่พบวันเวลาผ่านทางที่ถูกต้อง&#x27;);if(!mlpr)warnings.push(operators.length&gt;1?&#x27;พบชื่อผู้ดำเนินการ (MLPR_ / TG_) หลายชื่อ กรุณาเลือกเอง&#x27;:&#x27;ไม่พบผู้ดำเนินการ MLPR_ หรือ TG_&#x27;);
+ return {row,warnings,meta:{trip,ref,mlpr,plaza:get(&#x27;ด่าน&#x27;),vehicle:get(&#x27;รหัส Vehicle Class&#x27;),fee:get(&#x27;ค่าธรรมเนียมการผ่านทาง&#x27;),highway:get(&#x27;สายทาง&#x27;),lane:get(&#x27;ช่อง&#x27;)},recognized:ts.length&gt;0};
+}
+
+function excelCell(v,multiline=false){let s=multiline?String(v??&#x27;&#x27;).replace(/\r\n?/g,&#x27;\n&#x27;).split(&#x27;\n&#x27;).map(clean).join(&#x27;\n&#x27;).trim():clean(v);if(/^[=+@-]/.test(s)&amp;&amp;!/^[-]+$/.test(s))s=&quot;&#x27;&quot;+s;return /[&quot;\t\r\n]/.test(s)?&#x27;&quot;&#x27;+s.replace(/&quot;/g,&#x27;&quot;&quot;&#x27;)+&#x27;&quot;&#x27;:s;}
+function toTSV(rows){return rows.map(r=&gt;r.map((v,i)=&gt;i===10?&#x27;&#x27;:excelCell(v,i===12)).join(&#x27;\t&#x27;)).join(&#x27;\n&#x27;);}
+
+const $=id=&gt;document.getElementById(id);
+let active=null,history=[],operatorName=&#x27;&#x27;,currentId=null,seq=0,parseTimer,toastTimer,sourceMeta={},sourceWarnings=[];
+const fields=[],tableInputs=[];
+const COL2_7_OPTIONS = [&#x27;ตรวจสอบรายการผ่านทาง&#x27;, &#x27;ตรวจสอบการผ่านทางที่ผิดกฎหมาย&#x27;, &#x27;ตรวจสอบการผ่านทางที่ได้รับการยกเว้น&#x27;, &#x27;ตรวจสอบรายการผ่านทางอนุมัติผ่านทางพิเศษ&#x27;, &#x27;-&#x27;];
+const COL10_OPTIONS = [&#x27;สร้างTXNเท่านั้น&#x27;, &#x27;สร้างTXN+ยิงpostman&#x27;, &#x27;ยิงpostmanเท่านั้น&#x27;, &#x27;-&#x27;, &#x27;แก้ไขจาก RCF&#x27;];
+const OPERATOR_NAMES=[&quot;ปอร์ลี่&quot;, &quot;แนน&quot;, &quot;ปาล์ม&quot;, &quot;ซัน&quot;, &quot;นนท์&quot;, &quot;นิว&quot;, &quot;ภีม&quot;, &quot;มิ&quot;, &quot;ไอซ์บ้านแพร้ว&quot;, &quot;ฟีม&quot;, &quot;เบียร์&quot;, &quot;เบ๊บ&quot;, &quot;เฟิร์ส&quot;, &quot;หมวย&quot;, &quot;นาเดีย&quot;, &quot;ปุ๊ก&quot;, &quot;เตาบะห์&quot;, &quot;ดีดี้&quot;, &quot;เป๋าเป้&quot;, &quot;ป๊อบ&quot;, &quot;มันแกว&quot;];
+const fieldTitles=[&#x27;ทะเบียนรถ&#x27;,&#x27;ประเภทงาน&#x27;,&#x27;ด่าน (ตัวย่อ)&#x27;,&#x27;วัน เวลา&#x27;,&#x27;เดือน (ภาษาไทย)&#x27;,&#x27;ทะเบียนรถซ้ำ&#x27;,&#x27;ประเภทตรวจสอบ&#x27;,&#x27;Ref Trip ID&#x27;,&#x27;สาเหตุ&#x27;,&#x27;การดำเนินการ&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;ชื่อผู้ปฏิบัติงาน&#x27;,&#x27;แจ้งหน้างาน&#x27;];
+const placeholders=[&#x27;10 8629 ขอนแก่น&#x27;,&#x27;&#x27;,&#x27;TY1&#x27;,&#x27;26/11/2026 04:58:58&#x27;,&#x27;พฤศจิกายน&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;รหัส Trip ID จากต้นทาง&#x27;,&#x27;&#x27;,&#x27;&#x27;,&#x27;เว้นว่าง&#x27;,&#x27;เลือกชื่อผู้ปฏิบัติงาน&#x27;,&#x27;แจ้งหน้างาน\nMLPR_ / TG_...&#x27;];
+
+function el(tag,cls=&#x27;&#x27;,text=&#x27;&#x27;){const x=document.createElement(tag);if(cls)x.className=cls;if(text)x.textContent=text;return x;}
+function btn(text,fn,cls=&#x27;minor&#x27;){const b=el(&#x27;button&#x27;,cls,text);b.type=&#x27;button&#x27;;b.addEventListener(&#x27;click&#x27;,fn);return b;}
+function makeField(i){
+  if(i===1||i===6){
+    const select=el(&#x27;select&#x27;);
+    for(const opt of COL2_7_OPTIONS){const option=el(&#x27;option&#x27;,&#x27;&#x27;,opt);option.value=opt;select.append(option);}
+    return select;
+  }
+  if(i===9){
+    const select=el(&#x27;select&#x27;);
+    for(const opt of COL10_OPTIONS){const option=el(&#x27;option&#x27;,&#x27;&#x27;,opt);option.value=opt;select.append(option);}
+    return select;
+  }
+  if(i===11){
+    const select=el(&#x27;select&#x27;);
+    const placeholder=el(&#x27;option&#x27;,&#x27;&#x27;,&#x27;-- เลือกชื่อ --&#x27;);
+    placeholder.value=&#x27;&#x27;;select.append(placeholder);
+    for(const name of OPERATOR_NAMES){const option=el(&#x27;option&#x27;,&#x27;&#x27;,name);option.value=name;select.append(option);}
+    return select;
+  }
+  const inp=el(i===12?&#x27;textarea&#x27;:&#x27;input&#x27;);
+  if(i===12)inp.rows=2;else inp.type=&#x27;text&#x27;;
+  return inp;
+}
+
+function init(){
+  HEADERS.forEach((h,i)=&gt;{
+    const th=el(&#x27;th&#x27;,&#x27;&#x27;,`${i+1}. ${h}`);$(&#x27;headers&#x27;).append(th);
+    const cls=[0,5,7,12].includes(i)?&#x27; key&#x27;:i===2?&#x27; green&#x27;:i===4?&#x27; amber&#x27;:i===10?&#x27; blank&#x27;:&#x27;&#x27;;
+    const card=el(&#x27;div&#x27;,&#x27;field&#x27;+cls);
+    const lr=el(&#x27;div&#x27;,&#x27;labelrow&#x27;);
+    const label=el(&#x27;label&#x27;,&#x27;&#x27;,`${i+1}. ${fieldTitles[i]}`);label.htmlFor=&#x27;col_&#x27;+(i+1);
+    lr.append(label,btn(&#x27;คัดลอก&#x27;,()=&gt;copySingle(i),&#x27;mini&#x27;));card.append(lr);
+    const inp=makeField(i);inp.id=&#x27;col_&#x27;+(i+1);inp.placeholder=placeholders[i];inp.spellcheck=false;inp.readOnly=i===10;
+    inp.addEventListener([1,6,9,11].includes(i)?&#x27;change&#x27;:&#x27;input&#x27;,()=&gt;edit(i,inp.value));
+    fields.push(inp);card.append(inp);
+    if(i===7){
+      const q=el(&#x27;div&#x27;,&#x27;quick&#x27;);q.append(btn(&#x27;คืนค่า Trip ID&#x27;,()=&gt;{if(sourceMeta.trip)edit(7,sourceMeta.trip);else toast(&#x27;ไม่พบรหัส Trip ID&#x27;,true);},&#x27;mini&#x27;));card.append(q);
+    }
+    if(i===2){
+      const q=el(&#x27;div&#x27;,&#x27;quick&#x27;);
+      [&#x27;TC1&#x27;,&#x27;TC2&#x27;,&#x27;TY1&#x27;,&#x27;TY2&#x27;].forEach(v=&gt;q.append(btn(v,()=&gt;edit(2,v),&#x27;mini&#x27;)));
+      card.append(q);
+    }
+    $(&#x27;fields&#x27;).append(card);
+  });
+  const tr=el(&#x27;tr&#x27;);
+  HEADERS.forEach((h,i)=&gt;{
+    const td=el(&#x27;td&#x27;);td.style.minWidth=([0,5,7,8,12].includes(i)?225:[1,3,6,9,11].includes(i)?170:95)+&#x27;px&#x27;;
+    const inp=makeField(i);inp.setAttribute(&#x27;aria-label&#x27;,h);inp.readOnly=i===10;inp.spellcheck=false;
+    inp.addEventListener([1,6,9,11].includes(i)?&#x27;change&#x27;:&#x27;input&#x27;,()=&gt;edit(i,inp.value));
+    tableInputs.push(inp);td.append(inp);tr.append(td);
+  });
+  $(&#x27;preview&#x27;).append(tr);
+  render();renderHistory();
+}
+
+function toast(message,error=false){const t=$(&#x27;toast&#x27;);t.textContent=message;t.className=&#x27;toast show&#x27;+(error?&#x27; error&#x27;:&#x27;&#x27;);clearTimeout(toastTimer);toastTimer=setTimeout(()=&gt;t.className=&#x27;toast&#x27;,3200);}
+function render(){const row=active||blankRow(operatorName);row.forEach((v,i)=&gt;{if(fields[i].value!==v)fields[i].value=v;if(tableInputs[i].value!==v)tableInputs[i].value=v;});$(&#x27;preview&#x27;).hidden=!active;$(&#x27;empty&#x27;).hidden=!!active;$(&#x27;count&#x27;).textContent=active?&#x27;1 รายการ&#x27;:&#x27;ว่าง&#x27;;$(&#x27;copyRow&#x27;).disabled=!active;$(&#x27;copyHeader&#x27;).disabled=!active;updateStatus();}
+function issues(){if(!active)return [];const out=[];if(!active[0])out.push(&#x27;ยังไม่มีทะเบียน&#x27;);if(!active[2])out.push(&#x27;ยังไม่มีด่าน&#x27;);else if(!/^(TC|TY)[12]$/.test(active[2]))out.push(&#x27;ตรวจสอบรหัสด่าน&#x27;);if(!dateTime(active[3]))out.push(&#x27;ตรวจสอบวันเวลา&#x27;);if(!active[7])out.push(&#x27;ไม่พบรหัส Trip ID จากต้นทาง&#x27;);else if(!/^(?:[0-9]{30}[A-Z](?:_[0-9]+)?)$/i.test(active[7]))out.push(&#x27;ตรวจสอบรูปแบบ Ref Trip ID&#x27;);if(!/^แจ้งหน้างาน\n(?:MLPR|TG)_[A-Za-z0-9][A-Za-z0-9_.@-]*$/i.test(active[12]))out.push(&#x27;ตรวจสอบชื่อผู้ดำเนินการ MLPR_ หรือ TG_&#x27;);if(sourceWarnings.includes(&#x27;ทะเบียนไม่ครบ (หมวด / เลข / จังหวัด)&#x27;))out.push(&#x27;ข้อมูลต้นทางทะเบียนไม่ครบ โปรดตรวจสอบ&#x27;);return [...new Set(out)];}
+function updateStatus(){const w=$(&#x27;warning&#x27;),s=$(&#x27;status&#x27;);let a=issues();if(active&amp;&amp;sourceWarnings.includes(&#x27;พบชื่อผู้ดำเนินการ (MLPR_ / TG_) หลายชื่อ กรุณาเลือกเอง&#x27;)&amp;&amp;!active[12])a.push(&#x27;พบชื่อผู้ดำเนินการ (MLPR_ / TG_) หลายชื่อ กรุณาเลือกเอง&#x27;);w.textContent=a.join(&#x27; • &#x27;);w.className=&#x27;notice&#x27;+(a.length?&#x27; show&#x27;:&#x27;&#x27;);s.className=&#x27;status&#x27;+(active?(a.length?&#x27; warn&#x27;:&#x27; ok&#x27;):&#x27;&#x27;);s.textContent=active?(a.length?&#x27;โปรดตรวจสอบข้อมูล&#x27;:&#x27;พร้อมคัดลอก 13 ช่อง&#x27;):&#x27;รอวางข้อความ&#x27;;}
+function showMeta(meta){$(&#x27;meta&#x27;).replaceChildren();for(const [label,val] of [[&#x27;Trip ID&#x27;,meta.trip],[&#x27;Ref Trip ID&#x27;,meta.ref],[&#x27;Class&#x27;,meta.vehicle],[&#x27;ค่าผ่านทาง&#x27;,meta.fee],[&#x27;ช่อง&#x27;,meta.lane],[&#x27;MLPR&#x27;,meta.mlpr]])if(val)$(&#x27;meta&#x27;).append(el(&#x27;span&#x27;,&#x27;chip&#x27;,label+&#x27;: &#x27;+val));$(&#x27;summary&#x27;).textContent=meta.trip?&#x27;Trip ID: &#x27;+meta.trip+&#x27; · ช่อง 8 ใช้รหัส Trip ID หลักเป็น REF ID&#x27;:&#x27;ข้อมูลจากระบบจะแสดงที่นี่&#x27;;}
+function edit(i,val){if(i===10)return;if(i===11){if(val&amp;&amp;!OPERATOR_NAMES.includes(val))return;operatorName=val;}if(!active){if(i===11){fields[i].value=operatorName;return;}active=blankRow(operatorName);sourceWarnings=[];sourceMeta={};}active[i]=i===12?val.replace(/\r\n?/g,&#x27;\n&#x27;).replace(/\t/g,&#x27; &#x27;):val.replace(/[\r\n\t]/g,&#x27; &#x27;);if(i===0||i===5){active[0]=active[5]=active[i];sourceWarnings=sourceWarnings.filter(x=&gt;!x.startsWith(&#x27;ทะเบียนไม่ครบ&#x27;));}if(i===3)active[4]=monthFrom(val);active[10]=&#x27;&#x27;;render();syncHistory();}
+function addHistory(){if(!active)return;const key=sourceMeta.trip;const last=history[0];if(last&amp;&amp;((key&amp;&amp;last.meta.trip===key)||(!key&amp;&amp;last.row[0]===active[0]&amp;&amp;last.row[3]===active[3]&amp;&amp;last.row[12]===active[12]))){currentId=last.id;syncHistory();return;}currentId=++seq;history.unshift({id:currentId,row:[...active],meta:{...sourceMeta},warnings:[...sourceWarnings],time:new Date().toLocaleTimeString(&#x27;th-TH&#x27;)});history=history.slice(0,50);renderHistory();}
+function syncHistory(){const item=history.find(x=&gt;x.id===currentId);if(item&amp;&amp;active){item.row=[...active];item.warnings=[...sourceWarnings];renderHistory();}}
+function process(raw,{auto=false,record=true}={}){if(!raw.trim())return;const result=parse(raw,operatorName);if(!result.recognized){active=null;currentId=null;sourceWarnings=[];sourceMeta={};render();showMeta({});toast(&#x27;ไม่พบหัวข้อข้อมูลจากระบบ กรุณาวางข้อความต้นฉบับ&#x27;,true);return;}active=result.row;sourceWarnings=result.warnings;sourceMeta=result.meta;currentId=null;render();showMeta(sourceMeta);if(record)addHistory();if(auto&amp;&amp;$(&#x27;auto&#x27;).checked){if(issues().length)toast(&#x27;พบข้อมูลไม่ครบหรือผิดรูปแบบ กรุณาตรวจสอบก่อนคัดลอก&#x27;,true);else copyCurrent(false);}else toast(issues().length?&#x27;แกะข้อมูลแล้ว กรุณาตรวจสอบช่องที่แจ้งเตือน&#x27;:&#x27;แกะข้อมูล 13 ช่องเรียบร้อย&#x27;);}
+function renderHistory(){$(&#x27;histCount&#x27;).textContent=history.length;$(&#x27;history&#x27;).replaceChildren();$(&#x27;copyAll&#x27;).disabled=!history.length;$(&#x27;clearAll&#x27;).disabled=!history.length;if(!history.length){$(&#x27;history&#x27;).append(el(&#x27;div&#x27;,&#x27;empty&#x27;,&#x27;ยังไม่มีประวัติในรอบนี้&#x27;));return;}history.forEach(item=&gt;{const r=el(&#x27;div&#x27;,&#x27;history-row&#x27;),d=el(&#x27;div&#x27;,&#x27;desc&#x27;);d.append(el(&#x27;span&#x27;,&#x27;&#x27;,item.time),el(&#x27;strong&#x27;,&#x27;&#x27;,item.row[0]||&#x27;ไม่พบทะเบียน&#x27;),el(&#x27;span&#x27;,&#x27;chip&#x27;,item.row[2]||&#x27;-&#x27;),el(&#x27;span&#x27;,&#x27;&#x27;,item.row[3]||&#x27;-&#x27;),el(&#x27;span&#x27;,&#x27;&#x27;,item.row[12]||&#x27;-&#x27;));const a=el(&#x27;div&#x27;,&#x27;actions&#x27;);a.append(btn(&#x27;เรียกดู&#x27;,()=&gt;{active=[...item.row];operatorName=active[11];sourceMeta={...item.meta};sourceWarnings=[...item.warnings];currentId=item.id;$(&#x27;raw&#x27;).value=&#x27;&#x27;;render();showMeta(sourceMeta);toast(&#x27;เรียกคืนรายการแล้ว&#x27;);}),btn(&#x27;คัดลอกแถวนี้&#x27;,()=&gt;copyText(toTSV([item.row]),&#x27;คัดลอกประวัติ 13 ช่องแล้ว&#x27;),&#x27;green-btn&#x27;));r.append(d,a);$(&#x27;history&#x27;).append(r);});}
+async function copyText(text,message){const prev=document.activeElement;let ok=false;const ta=el(&#x27;textarea&#x27;);ta.value=text;ta.style.cssText=&#x27;position:fixed;left:-9999px;top:0;opacity:0&#x27;;document.body.append(ta);ta.select();try{ok=document.execCommand(&#x27;copy&#x27;);}catch{}ta.remove();if(prev&amp;&amp;prev.focus)prev.focus({preventScroll:true});if(!ok&amp;&amp;navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);ok=true;}catch{}}if(ok)toast(message);else toast(&#x27;เบราว์เซอร์ไม่อนุญาตให้คัดลอก กรุณาลองคลิกปุ่มอีกครั้ง&#x27;,true);return ok;}
+function copySingle(i){const v=(active||blankRow(operatorName))[i];if(!v){toast(&#x27;ช่องนี้เว้นว่าง&#x27;);return;}copyText(i===12?excelCell(v,true):clean(v),&#x27;คัดลอกช่อง &#x27;+(i+1)+&#x27; แล้ว&#x27;);}
+function copyCurrent(header=false){if(!active)return;const rows=header?[HEADERS,active]:[active];const text=header?HEADERS.join(&#x27;\t&#x27;)+&#x27;\n&#x27;+toTSV([active]):toTSV(rows);copyText(text,&#x27;คัดลอก 13 ช่องแล้ว · ไปวางใน Excel ได้เลย&#x27;+(issues().length?&#x27; (มีข้อมูลที่ควรตรวจสอบ)&#x27;:&#x27;&#x27;));}
+function reset(){clearTimeout(parseTimer);active=null;currentId=null;sourceWarnings=[];sourceMeta={};$(&#x27;raw&#x27;).value=&#x27;&#x27;;render();showMeta({});toast(&#x27;ล้างหน้าจอแล้ว · เก็บชื่อผู้ปฏิบัติงานและประวัติไว้&#x27;);}
+window.addEventListener(&#x27;paste&#x27;,e=&gt;{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||(e.target instanceof HTMLTextAreaElement&amp;&amp;e.target!==$(&#x27;raw&#x27;)))return;const s=e.clipboardData?.getData(&#x27;text/plain&#x27;);if(!s?.trim())return;e.preventDefault();clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=s;process(s,{auto:true});});
+$(&#x27;raw&#x27;).addEventListener(&#x27;input&#x27;,()=&gt;{clearTimeout(parseTimer);parseTimer=setTimeout(()=&gt;{if($(&#x27;raw&#x27;).value.trim())process($(&#x27;raw&#x27;).value,{record:false});},250);});
+$(&#x27;sample&#x27;).onclick=()=&gt;{clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=SAMPLE;process(SAMPLE,{record:false});};$(&#x27;clear&#x27;).onclick=reset;$(&#x27;clearRaw&#x27;).onclick=()=&gt;{clearTimeout(parseTimer);$(&#x27;raw&#x27;).value=&#x27;&#x27;;$(&#x27;raw&#x27;).focus();};$(&#x27;copyRow&#x27;).onclick=()=&gt;copyCurrent();$(&#x27;copyHeader&#x27;).onclick=()=&gt;copyCurrent(true);$(&#x27;copyAll&#x27;).onclick=()=&gt;{if(history.length)copyText(toTSV([...history].reverse().map(x=&gt;x.row)),&#x27;คัดลอกประวัติ &#x27;+history.length+&#x27; รายการแล้ว&#x27;);};$(&#x27;clearAll&#x27;).onclick=()=&gt;{if(history.length&amp;&amp;confirm(&#x27;ยืนยันล้างประวัติ &#x27;+history.length+&#x27; รายการ?&#x27;)){history=[];currentId=null;renderHistory();toast(&#x27;ล้างประวัติแล้ว&#x27;);}};init();
+&lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe>
+
+<script>
+  let selected = 0;
+  const tabs = [document.getElementById('tab0'), document.getElementById('tab1')],
+        frames = [document.getElementById('frame0'), document.getElementById('frame1')];
+
+  function choose(i) {
+    selected = i;
+    tabs.forEach((t, j) => {
+      t.setAttribute('aria-selected', String(i === j));
+      t.tabIndex = i === j ? 0 : -1;
+      frames[j].hidden = i !== j;
+    });
+    try { frames[i].contentWindow.focus(); } catch {}
+  }
+
+  tabs.forEach((t, i) => {
+    t.onclick = () => choose(i);
+    t.onkeydown = e => {
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+        e.preventDefault();
+        choose(e.key === 'Home' ? 0 : e.key === 'End' ? 1 : 1 - i);
+        tabs[selected].focus();
+      }
+    };
+  });
+
+  tabs[1].tabIndex = -1;
+
+  window.addEventListener('paste', e => {
+    const s = e.clipboardData?.getData('text/plain');
+    if (!s?.trim()) return;
+    const w = frames[selected].contentWindow;
+    try {
+      e.preventDefault();
+      w.document.getElementById('raw').value = s;
+      w.process(s, { auto: true });
+    } catch {}
+  });
+</script>
+</body>
+</html>
